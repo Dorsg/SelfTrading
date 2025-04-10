@@ -1,0 +1,3 @@
+ib_insync
+sqlalchemy
+psycopg2-binary
