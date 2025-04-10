@@ -1,5 +1,5 @@
-from strategy_engine.db.database import engine
-from strategy_engine.db.models import Base
+from database.database import engine
+from database.models import Base
 
 print("Creating tables...")
 Base.metadata.create_all(bind=engine)

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from strategy_engine.db.database import SessionLocal
-from strategy_engine.db.models import Runner
+from database.database import SessionLocal
+from database.models import Runner
 from api_gateway.schemas.runner import RunnerCreate, RunnerResponse
 from typing import List
 
