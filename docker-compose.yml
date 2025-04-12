@@ -4,6 +4,7 @@ services:
   db:
     image: postgres:15
     container_name: trading-db
+    restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -11,19 +12,38 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
 
   api_gateway:
-    build: ./api_gateway
-    depends_on:
-      - db
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    volumes:
+      - .:/app
+    command: uvicorn api_gateway.main:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
+    depends_on:
+      - db
 
-  strategy_engine:
-    build: ./strategy_engine
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.scheduler
+    volumes:
+      - .:/app
+    command: python runner_scheduler/main.py
+    depends_on:
+      - db
+      - db-init
+
+  db-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.scheduler  
+    command: sh -c "echo 'Waiting 15s for DB...' && sleep 15 && python database/init_db.py"
     depends_on:
       - db
 
 volumes:
-  pgdata:
+  pg_data:

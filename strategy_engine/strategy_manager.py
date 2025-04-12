@@ -1,6 +1,6 @@
 import time
 from ib_insync import IB, Stock, MarketOrder
-from database.database import SessionLocal
+from database.db_core import SessionLocal
 from sqlalchemy.orm import Session
 
 class StrategyManager:

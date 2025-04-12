@@ -4,6 +4,7 @@ from datetime import datetime
 
 Base = declarative_base()
 
+# ----- Account Snapshot -----
 class AccountSnapshot(Base):
     __tablename__ = 'account_snapshots'
 
@@ -20,7 +21,7 @@ class AccountSnapshot(Base):
     gross_position_value = Column(Float)
     cushion = Column(Float)
 
-
+# ----- Strategy -----
 class Strategy(Base):
     __tablename__ = 'strategies'
 
@@ -29,7 +30,7 @@ class Strategy(Base):
     symbol = Column(String, index=True)
     is_active = Column(Boolean, default=True)
 
-
+# ----- Runner -----
 class Runner(Base):
     __tablename__ = 'runners'
 
@@ -46,7 +47,7 @@ class Runner(Base):
     date_range = Column(String, nullable=False)
     stock_number_limit = Column(Integer, nullable=False)
 
-
+# ----- Trade Log -----
 class TradeLog(Base):
     __tablename__ = 'trade_logs'
 
@@ -56,5 +57,17 @@ class TradeLog(Base):
     quantity = Column(Integer, nullable=False)
     side = Column(String, nullable=False)
     status = Column(String, nullable=False)
-    order_id = Column(String, nullable=True)
+    order_id = Column(Integer, nullable=True)
     strategy_name = Column(String, nullable=True)
+    is_open = Column(Boolean, default=True)  # track open vs closed trades
+
+# ----- Positions -----
+class Positions(Base):
+    __tablename__ = 'positions'
+
+    id = Column(Integer, primary_key=True, index=True)
+    symbol = Column(String, nullable=False)
+    quantity = Column(Float, nullable=False)
+    avg_cost = Column(Float, nullable=False)
+    account = Column(String, nullable=False)
+    last_update = Column(DateTime, default=datetime.utcnow)
