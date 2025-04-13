@@ -1,9 +1,13 @@
 import logging
-from ib_insync import IB, Stock, MarketOrder, Trade
+from typing import List
+from ib_insync import (
+    IB, Stock, Order, MarketOrder, Trade, ExecutionFilter
+)
+
 logger = logging.getLogger(__name__)
 
 class IBManager:
-    def __init__(self, host='host.docker.internal', port=4002, client_id=15):
+    def __init__(self, host='127.0.0.1', port=4002, client_id=15):
         self.ib = IB()
         try:
             self.ib.connect(host, port, clientId=client_id)
@@ -12,76 +16,126 @@ class IBManager:
             logger.exception("Failed to connect to IB Gateway")
             raise
 
-    def get_account_information(self, accountId=None):
-        """
-        Return a dict of selected account summary tags.
-        """
-        try:
-            summary = self.ib.accountSummary()
-            result = {}
-            wanted_tags = {
-                'TotalCashValue', 'CashBalance', 'AccruedCash',
-                'AvailableFunds', 'ExcessLiquidity', 'NetLiquidation',
-                'RealizedPnL', 'UnrealizedPnL',
-                'GrossPositionValue', 'EquityWithLoanValue',
-                'BuyingPower', 'Cushion'
-            }
-            for item in summary:
-                if item.tag in wanted_tags:
-                    key = f"{item.tag} ({item.currency})" if item.currency else item.tag
-                    result[key] = item.value
+    def get_market_price(self, symbol):
+        contract = Stock(symbol, 'SMART', 'USD')
+        self.ib.qualifyContracts(contract)
+        market_data = self.ib.reqMktData(contract, "", False, False)
+        self.ib.sleep(2)
+        price = market_data.last or market_data.close
+        return float(price) if price else None
 
-            logger.info("Account summary fetched successfully")
-            return result
-        except Exception:
-            logger.exception("Error fetching account summary")
-            return {}
-
-    def place_market_order(self, symbol: str, quantity: int) -> str:
+    def place_order(self, symbol: str, quantity: int, side: str = 'BUY',
+                    order_type: str = 'MKT', aux_price: float = None, limit_price: float = None):
         """
-        Place a simple market BUY order for 'symbol' with size 'quantity'.
-        Returns the final status string, e.g. 'Filled' or 'Submitted'.
+        General-purpose order placer. Supports: MKT, LMT, STP, STP LMT
+
+        Examples:
+            ib.place_order('AAPL', 1, side='BUY', order_type='MKT')
+            ib.place_order('AAPL', 1, side='BUY', order_type='STP', aux_price=150.0)
+            ib.place_order('AAPL', 1, side='SELL', order_type='LMT', limit_price=145.0)
+            ib.place_order('AAPL', 1, side='BUY', order_type='STP LMT', aux_price=150.0, limit_price=151.0)
         """
         try:
             contract = Stock(symbol, 'SMART', 'USD')
-            order = MarketOrder('BUY', quantity)
+            self.ib.qualifyContracts(contract)
+
+            order = Order(
+                action=side,
+                totalQuantity=quantity,
+                orderType=order_type,
+                auxPrice=aux_price,
+                lmtPrice=limit_price,
+                transmit=True
+            )
+
             trade = self.ib.placeOrder(contract, order)
-            self.ib.sleep(3)  # wait for fill
+            self.ib.sleep(2)
 
             status = trade.orderStatus.status
-            logger.info("Order placed: %s x%d => %s", symbol, quantity, status)
-            # If you want to store orderId in DB, it's 'trade.order.orderId'
-            return status
-        except Exception:
-            logger.exception("Error placing market order for %s x%d", symbol, quantity)
-            return None
+            ib_order_id = trade.order.orderId
+            perm_id = trade.order.permId
+            fill_price = trade.orderStatus.avgFillPrice if status == 'Filled' else None
 
-    def get_all_trades(self) -> list[Trade]:
-        """
-        Return all trades from this session; you can match them by orderId to DB.
-        """
+            logger.info(
+                "%s order placed: %s x%d (%s). status=%s, ib_order_id=%d, perm_id=%s, fill_price=%s",
+                order_type, symbol, quantity, side, status, ib_order_id, perm_id, fill_price
+            )
+            return status, ib_order_id, fill_price, perm_id
+        except Exception:
+            logger.exception("Error placing %s %s order for %s x%d", side, order_type, symbol, quantity)
+            return None, None, None, None
+
+    def get_all_orders_status(self):
         try:
             trades = self.ib.trades()
-            return trades
+            return [{
+                'orderId': t.order.orderId,
+                'status': t.orderStatus.status,
+                'fillPrice': t.orderStatus.avgFillPrice
+            } for t in trades]
         except Exception:
-            logger.exception("Error fetching trades from IB")
+            logger.exception("Error fetching orders status from IB")
+            return []
+
+    def fetch_all_executions(self):
+        try:
+            exec_filter = ExecutionFilter()
+            exec_details = self.ib.reqExecutions(exec_filter)
+            results = []
+            for detail in exec_details:
+                execution = detail.execution
+                contract = detail.contract
+                side = "BUY" if execution.side.upper() == "BOT" else "SELL"
+                results.append({
+                    'ib_order_id': execution.orderId,
+                    'symbol': contract.symbol,
+                    'side': side,
+                    'quantity': execution.shares,
+                    'price': execution.avgPrice,
+                    'exec_time': execution.time
+                })
+            logger.info("Fetched %d executions from IB", len(results))
+            return results
+        except Exception:
+            logger.exception("Error fetching all executions from IB")
+            return []
+
+    def fetch_all_open_orders(self):
+        try:
+            self.ib.reqAllOpenOrders()
+            self.ib.sleep(2)
+            open_trades = self.ib.openTrades()
+            logger.info("Fetched %d open trades (orders) from IB", len(open_trades))
+            return open_trades
+        except Exception:
+            logger.exception("Error fetching all open orders from IB")
+            return []
+
+    def fetch_completed_orders(self) -> List[Trade]:
+        logger.info("Fetching completed orders (synchronously) from IB...")
+        try:
+            self.ib.reqCompletedOrders(apiOnly=False)
+            self.ib.sleep(2)
+            if hasattr(self.ib, 'completedOrders'):
+                completed_list = self.ib.completedOrders()
+                logger.info("Fetched %d completed orders from IB", len(completed_list))
+                return completed_list
+            else:
+                logger.warning("This ib_insync build has no 'completedOrders' method. Returning [].")
+                return []
+        except Exception:
+            logger.exception("Error fetching completed orders from IB")
             return []
 
     def get_positions(self):
-        """
-        Return a list of dicts with the fields you want from .positions().
-        """
-        positions_data = []
         try:
-            ib_positions = self.ib.positions()  # returns a list of Position objects
-            for pos in ib_positions:
-                positions_data.append({
-                    'symbol': pos.contract.symbol,
-                    'quantity': pos.position,
-                    'avgCost': pos.avgCost,
-                    'account': pos.account
-                })
-            logger.info("Fetched %d positions from IB", len(positions_data))
+            ib_positions = self.ib.positions()
+            return [{
+                'symbol': pos.contract.symbol,
+                'quantity': pos.position,
+                'avgCost': pos.avgCost,
+                'account': pos.account
+            } for pos in ib_positions]
         except Exception:
             logger.exception("Error fetching positions from IB")
-        return positions_data
+            return []

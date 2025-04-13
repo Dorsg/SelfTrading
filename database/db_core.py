@@ -4,7 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-DATABASE_URL = "postgresql://postgres:password@db:5432/self_trading_db"
+DATABASE_URL = "postgresql://postgres:password@localhost:5432/self_trading_db"
 
 try:
     engine = create_engine(DATABASE_URL, echo=True)

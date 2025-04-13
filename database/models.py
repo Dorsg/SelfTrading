@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 from datetime import datetime
 
 Base = declarative_base()
@@ -47,19 +48,49 @@ class Runner(Base):
     date_range = Column(String, nullable=False)
     stock_number_limit = Column(Integer, nullable=False)
 
-# ----- Trade Log -----
-class TradeLog(Base):
-    __tablename__ = 'trade_logs'
+# ----- Orders -----
+class Order(Base):
+    __tablename__ = 'orders'
+
+    id = Column(Integer, primary_key=True, index=True)
+    runner_id = Column(Integer, ForeignKey('runners.id'), nullable=True)
+    ib_order_id = Column(Integer, nullable=False, unique=True)
+    perm_id = Column(Integer, nullable=True)  # <-- NEW COLUMN for IB's permanent ID
+
+    symbol = Column(String, nullable=False)
+    quantity = Column(Integer, nullable=False)
+    side = Column(String, nullable=False)    # 'BUY'/'SELL'
+    status = Column(String, nullable=False, default='Open')  # 'Open', 'Filled', 'Cancelled', etc.
+    filled = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
+    runner = relationship("Runner", backref="orders")
+
+# ----- Trades -----
+class Trade(Base):
+    __tablename__ = 'trades'
 
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
+
+    # references
+    runner_id = Column(Integer, ForeignKey('runners.id'), nullable=True)
+    order_id = Column(Integer, ForeignKey('orders.id'), nullable=True)
+
+    # store IB order ID to match with historical fetch (reqExecutions)
+    ib_order_id = Column(Integer, nullable=True)
+
     symbol = Column(String, nullable=False)
+    side = Column(String, nullable=False)  # 'BUY'/'SELL'
     quantity = Column(Integer, nullable=False)
-    side = Column(String, nullable=False)
-    status = Column(String, nullable=False)
-    order_id = Column(Integer, nullable=True)
-    strategy_name = Column(String, nullable=True)
-    is_open = Column(Boolean, default=True)  # track open vs closed trades
+
+    buy_price = Column(Float, nullable=True)
+    sell_price = Column(Float, nullable=True)
+    profit_loss = Column(Float, nullable=True, default=0.0)
+
+    runner = relationship("Runner", backref="trades")
+    order = relationship("Order", backref="trade")
 
 # ----- Positions -----
 class Positions(Base):
@@ -70,4 +101,5 @@ class Positions(Base):
     quantity = Column(Float, nullable=False)
     avg_cost = Column(Float, nullable=False)
     account = Column(String, nullable=False)
+    is_open = Column(Boolean, default=True)
     last_update = Column(DateTime, default=datetime.utcnow)

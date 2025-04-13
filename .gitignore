@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Ignore Vue client build artifacts
+/client-ui/node_modules
+/client-ui/dist
+
 # C extensions
 *.so
 
