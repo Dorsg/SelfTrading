@@ -27,3 +27,4 @@ tzdata==2025.2
 uvicorn==0.34.0
 schedule==1.2.0
 coloredlogs==15.0.1
+python-dotenv

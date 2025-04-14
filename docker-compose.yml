@@ -13,6 +13,8 @@ services:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
+    env_file:
+      - .env
 
   api_gateway:
     build:
@@ -36,6 +38,8 @@ services:
     depends_on:
       - db
       - db-init
+    env_file:
+      - .env
 
   db-init:
     build:
@@ -44,6 +48,8 @@ services:
     command: sh -c "echo 'Waiting 15s for DB...' && sleep 15 && python database/init_db.py"
     depends_on:
       - db
+    env_file:
+      - .env
 
 volumes:
   pg_data:

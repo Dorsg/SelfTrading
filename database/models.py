@@ -55,12 +55,11 @@ class Order(Base):
     id = Column(Integer, primary_key=True, index=True)
     runner_id = Column(Integer, ForeignKey('runners.id'), nullable=True)
     ib_order_id = Column(Integer, nullable=False, unique=True)
-    perm_id = Column(Integer, nullable=True)  # <-- NEW COLUMN for IB's permanent ID
-
+    perm_id = Column(Integer, nullable=True)
     symbol = Column(String, nullable=False)
     quantity = Column(Integer, nullable=False)
-    side = Column(String, nullable=False)    # 'BUY'/'SELL'
-    status = Column(String, nullable=False, default='Open')  # 'Open', 'Filled', 'Cancelled', etc.
+    side = Column(String, nullable=False)
+    status = Column(String, nullable=False, default='Open') 
     filled = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)

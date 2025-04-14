@@ -8,7 +8,7 @@
         <QSeparator dark />
   
         <QCardSection class="form-section">
-          <QForm @submit.prevent="submitForm" class="q-gutter-md">
+          <QForm @submit.prevent="submitForm" class="q-gutter-sm">
             <div v-for="(field, key) in formFields" :key="key">
               <QInput
                 v-if="field.type !== 'checkbox'"
@@ -30,12 +30,12 @@
                 dark
               />
             </div>
-  
-            <div class="row justify-end q-gutter-sm q-mt-md">
-              <QBtn flat label="Cancel" color="negative" @click="$emit('close')" />
-              <QBtn type="submit" label="Create" color="primary" />
-            </div>
           </QForm>
+        </QCardSection>
+  
+        <QCardSection class="dialog-actions">
+          <QBtn flat label="Cancel" color="negative" @click="$emit('close')" />
+          <QBtn type="submit" label="Create" color="primary" @click="submitForm" />
         </QCardSection>
       </QCard>
     </QDialog>
@@ -87,7 +87,7 @@
     background-color: #2b2b3d;
     border: 1px solid #444;
     border-radius: 12px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.4);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
     color: #fff;
   }
   
@@ -106,4 +106,53 @@
     background-color: #555;
     border-radius: 6px;
   }
+  
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .dialog-actions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+  }
+  
+  .dialog-actions .cancel-btn {
+    background-color: #e53935;
+    color: white;
+  }
+  
+  .dialog-actions button[type="submit"] {
+    background-color: #00d1b2;
+    color: #1e1e2f;
+  }
+  
+  /* Improve input field spacing */
+  .q-input {
+    margin-bottom: 8px;
+  }
+  
+  .q-checkbox {
+    margin-top: 8px;
+  }
+  
+  .q-form {
+    padding-bottom: 10px;
+  }
+  
+  /* Label customizations */
+  .q-input__label {
+    color: #ccc;
+    font-size: 1rem;
+  }
+  
+  .q-checkbox__label {
+    color: #ccc;
+    font-size: 1rem;
+  }
   </style>
+  
