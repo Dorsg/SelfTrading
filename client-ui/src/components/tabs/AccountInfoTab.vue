@@ -13,23 +13,57 @@
       </div>
     </div>
   </div>
+
+  <div class="q-mt-md">
+    <q-card flat bordered class="dark-card">
+      <q-card-section>
+        <div class="text-h6">Open Positions</div>
+        <div v-if="positionsLastUpdate" class="last-updated">
+          Last update on: {{ formatTimestamp(positionsLastUpdate) }}
+        </div>
+      </q-card-section>
+
+      <q-card-section>
+        <ag-grid-vue
+          class="ag-theme-alpine-dark"
+          style="width: 100%; height: 300px;"
+          :columnDefs="positionsColumnDefs"
+          :rowData="openPositions"
+          :domLayout="'autoHeight'"
+          :suppressMovableColumns="true"
+          :pagination="false"
+        />
+      </q-card-section>
+    </q-card>
+  </div>
 </template>
 
 <script>
-import { fetchAccountSnapshot } from '@/services/dataFetcher';
+import { fetchAccountSnapshot, fetchOpenPositions } from '@/services/dataFetcher';
+import { AgGridVue } from 'ag-grid-vue3';
 
 export default {
   name: 'AccountInfoTab',
+  components: { AgGridVue },
   data() {
     return {
       snapshot: null,
+      openPositions: [],
+      positionsLastUpdate: null,
+      positionsColumnDefs: [
+        { field: 'symbol', headerName: 'Symbol' },
+        { field: 'quantity', headerName: 'Quantity' },
+        { field: 'avg_price', headerName: 'Avg Price' },
+        { field: 'account', headerName: 'Account' },
+        { field: 'last_update', headerName: 'Last Update' },
+      ],
     };
   },
   computed: {
     formattedData() {
       if (!this.snapshot) return [];
       return [
-        { label: 'Account ID', value: 'DU1234567' },
+        { label: 'Account ID', value: this.snapshot.account },
         { label: 'Balance', value: this.formatDollar(this.snapshot.total_cash_value), class: 'highlight' },
         { label: 'Buying Power', value: this.formatDollar(this.snapshot.buying_power), class: 'highlight' },
         { label: 'Unrealized PnL', value: this.formatDollar(this.snapshot.unrealized_pnl), class: this.snapshot.unrealized_pnl >= 0 ? 'pnl-positive' : 'pnl-negative' },
@@ -44,6 +78,17 @@ export default {
         this.snapshot = await fetchAccountSnapshot();
       } catch (err) {
         console.error('Failed to fetch snapshot:', err);
+      }
+    },
+    async loadOpenPositions() {
+      try {
+        const positions = await fetchOpenPositions();
+        this.openPositions = positions;
+        if (positions.length > 0) {
+          this.positionsLastUpdate = positions[0].last_update;
+        }
+      } catch (err) {
+        console.error('Failed to fetch open positions:', err);
       }
     },
     formatDollar(val) {
@@ -61,6 +106,7 @@ export default {
   },
   mounted() {
     this.loadSnapshot();
+    this.loadOpenPositions();
   },
 };
 </script>
@@ -86,6 +132,7 @@ h2 {
 .last-updated {
   font-size: 0.9rem;
   color: #aaa;
+  margin-top: 5px;
 }
 
 .card-grid {
@@ -94,13 +141,14 @@ h2 {
   gap: 16px;
 }
 
-.card {
+.card, .dark-card {
   background-color: #333;
   padding: 16px;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  color: #e0e0e0;
 }
 
 label {
@@ -125,5 +173,12 @@ span {
 
 .pnl-negative {
   color: #e53935;
+}
+
+.ag-theme-alpine-dark {
+  --ag-background-color: #2c2c2c;
+  --ag-foreground-color: #e0e0e0;
+  --ag-header-background-color: #1f1f1f;
+  --ag-header-foreground-color: #ccc;
 }
 </style>

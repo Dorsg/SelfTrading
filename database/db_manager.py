@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, date
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from database.models import AccountSnapshot
+from database.models import AccountSnapshot, OpenPosition
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,7 @@ class DBManager:
                 realized_pnl=snapshot_data.get("RealizedPnL (USD)"),
                 excess_liquidity=snapshot_data.get("ExcessLiquidity (USD)"),
                 gross_position_value=snapshot_data.get("GrossPositionValue (USD)"),
+                account=snapshot_data.get("account"),
             )
             self.db.add(snapshot)
             self.db.commit()
@@ -39,3 +40,28 @@ class DBManager:
             logger.exception("Failed to insert account snapshot.")
             self.db.rollback()
             return None
+
+    def update_open_positions(self, positions: list):
+        try:
+            self.db.query(OpenPosition).delete()
+            for pos in positions:
+                new_pos = OpenPosition(
+                    symbol=pos["symbol"],
+                    quantity=pos["quantity"],
+                    avg_price=pos["avgCost"],
+                    account=pos["account"],
+                )
+                self.db.add(new_pos)
+            self.db.commit()
+            logger.info("Open positions updated successfully.")
+        except Exception:
+            logger.exception("Failed to update open positions.")
+            self.db.rollback()
+
+    def get_open_positions(self):
+        try:
+            positions = self.db.query(OpenPosition).all()
+            return positions
+        except Exception:
+            logger.exception("Failed to fetch open positions from the database.")
+            return []

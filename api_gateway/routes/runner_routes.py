@@ -5,7 +5,6 @@ from database.db_manager import DBManager
 import logging
 
 
-
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -41,3 +40,16 @@ def get_account_snapshot(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Failed to store snapshot")
 
     return snapshot
+
+@router.get("/account/positions")
+def get_open_positions(db: Session = Depends(get_db)):
+    """
+    Retrieves the currently open positions from the database.
+    """
+    dbm = DBManager(db)
+    try:
+        positions = dbm.get_open_positions()
+        return positions
+    except Exception as e:
+        logger.exception("Failed to retrieve open positions")
+        raise HTTPException(status_code=500, detail="Failed to retrieve positions")

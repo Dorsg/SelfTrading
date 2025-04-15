@@ -16,11 +16,11 @@ strategy_manager = StrategyManager()
 def run_scheduler():
     logger.info("Scheduler started")
     schedule.every(1).minutes.do(handle_daily_snapshot)
+    schedule.every(1).minutes.do(update_open_positions)
 
     while True:
         schedule.run_pending()
         time.sleep(1)
-
 
 def handle_daily_snapshot():
     logger.info("Checking for daily account snapshot...")
@@ -44,3 +44,18 @@ def handle_daily_snapshot():
     finally:
         db_session.close()
 
+def update_open_positions():
+    logger.info("Updating open positions...")
+    db_session = SessionLocal()
+    db = DBManager(db_session)
+
+    try:
+        positions = ib.get_open_positions()
+        if positions:
+            db.update_open_positions(positions)
+        else:
+            logger.warning("No open positions returned.")
+    except Exception:
+        logger.exception("Failed in update_open_positions()")
+    finally:
+        db_session.close()

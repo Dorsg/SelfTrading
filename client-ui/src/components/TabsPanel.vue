@@ -5,6 +5,7 @@
       class="bg-dark text-white q-mb-md"
       indicator-color="primary"
       dense
+      align="left" 
     >
       <q-tab
         v-for="(tab, index) in tabs"
