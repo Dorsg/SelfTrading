@@ -1,10 +1,8 @@
 import logging
-from datetime import datetime
+from datetime import datetime, date
+from sqlalchemy import func
 from sqlalchemy.orm import Session
-from database.models import (
-    AccountSnapshot, Trade, Positions,
-    Runner, Order
-)
+from database.models import AccountSnapshot
 
 logger = logging.getLogger(__name__)
 
@@ -12,4 +10,32 @@ class DBManager:
     def __init__(self, db_session: Session):
         self.db = db_session
 
- 
+    def get_today_snapshot(self):
+        today = date.today()
+        return (
+            self.db.query(AccountSnapshot)
+            .filter(func.date(AccountSnapshot.timestamp) == today)
+            .first()
+        )
+
+    def create_account_snapshot(self, snapshot_data: dict):
+        try:
+            snapshot = AccountSnapshot(
+                timestamp=datetime.utcnow(),
+                total_cash_value=snapshot_data.get("TotalCashValue (USD)"),
+                net_liquidation=snapshot_data.get("NetLiquidation (USD)"),
+                available_funds=snapshot_data.get("AvailableFunds (USD)"),
+                buying_power=snapshot_data.get("BuyingPower (USD)"),
+                unrealized_pnl=snapshot_data.get("UnrealizedPnL (USD)"),
+                realized_pnl=snapshot_data.get("RealizedPnL (USD)"),
+                excess_liquidity=snapshot_data.get("ExcessLiquidity (USD)"),
+                gross_position_value=snapshot_data.get("GrossPositionValue (USD)"),
+            )
+            self.db.add(snapshot)
+            self.db.commit()
+            logger.info("Account snapshot created successfully.")
+            return snapshot
+        except Exception:
+            logger.exception("Failed to insert account snapshot.")
+            self.db.rollback()
+            return None

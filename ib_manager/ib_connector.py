@@ -23,3 +23,23 @@ class IBManager:
         except Exception:
             logger.exception("Failed to connect to IB Gateway")
             raise
+
+    def get_account_information(self):
+        try:
+            summary = self.ib.accountSummary()
+            result = {}
+            wanted_tags = {
+                'TotalCashValue', 'CashBalance', 'AccruedCash',
+                'AvailableFunds', 'ExcessLiquidity', 'NetLiquidation',
+                'RealizedPnL', 'UnrealizedPnL',
+                'GrossPositionValue', 'BuyingPower'
+            }
+            for item in summary:
+                if item.tag in wanted_tags:
+                    key = f"{item.tag} ({item.currency})" if item.currency else item.tag
+                    result[key] = item.value
+            logger.info("Account summary fetched successfully")
+            return result
+        except Exception:
+            logger.exception("Error fetching account summary")
+            return {}
