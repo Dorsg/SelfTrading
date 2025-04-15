@@ -4,5 +4,6 @@ __pycache__
 *.pyo
 *.pyd
 *.log
-*.db
-.env
+node_modules
+client-ui/node_modules
+.git
