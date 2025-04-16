@@ -16,8 +16,9 @@ import {
   QInput,
   QCheckbox,
   QBtn,
-  QTabs,  // Added QTabs
-  QTab    // Added QTab
+  QTabs,  
+  QTab,
+  QTable
 } from 'quasar'
 
 // Register everything manually
@@ -33,8 +34,9 @@ app.use(Quasar, {
     QInput,
     QCheckbox,
     QBtn,
-    QTabs,  // Register QTabs
-    QTab     // Register QTab
+    QTabs,
+    QTab,
+    QTable
   },
   plugins: {} // optionally: Dialog, Notify, etc.
 })

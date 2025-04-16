@@ -23,12 +23,14 @@
 
 <script>
 import AccountInfoTab from './tabs/AccountInfoTab.vue';
+import OrdersTab from './tabs/OrdersTab.vue';
 import RunnersTab from './tabs/RunnersTab.vue';
 import EmptyTab from './tabs/EmptyTab.vue';
 
 export default {
   components: {
     AccountInfoTab,
+    OrdersTab,
     RunnersTab,
     EmptyTab
   },
@@ -37,6 +39,7 @@ export default {
       selectedTab: 0,
       tabs: [
         { label: 'Account Information', component: 'AccountInfoTab' },
+        { label: 'Orders', component: 'OrdersTab' },
         { label: 'Runners', component: 'RunnersTab' },
         { label: 'Tab 3', component: 'EmptyTab' },
         { label: 'Tab 4', component: 'EmptyTab' },

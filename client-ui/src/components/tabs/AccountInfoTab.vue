@@ -16,22 +16,21 @@
 
   <div class="q-mt-md">
     <q-card flat bordered class="dark-card">
-      <q-card-section>
+      <q-card-section class="row items-center justify-between">
         <div class="text-h6">Open Positions</div>
-        <div v-if="positionsLastUpdate" class="last-updated">
+        <div v-if="positionsLastUpdate" class="last-updated q-mt-none">
           Last update on: {{ formatTimestamp(positionsLastUpdate) }}
         </div>
       </q-card-section>
 
       <q-card-section>
-        <ag-grid-vue
-          class="ag-theme-alpine-dark"
-          style="width: 100%; height: 300px;"
-          :columnDefs="positionsColumnDefs"
-          :rowData="openPositions"
-          :domLayout="'autoHeight'"
-          :suppressMovableColumns="true"
-          :pagination="false"
+        <q-table
+          dense
+          flat
+          :rows="openPositions"
+          :columns="positionsColumns"
+          row-key="symbol"
+          class="my-quasar-table"
         />
       </q-card-section>
     </q-card>
@@ -40,23 +39,21 @@
 
 <script>
 import { fetchAccountSnapshot, fetchOpenPositions } from '@/services/dataFetcher';
-import { AgGridVue } from 'ag-grid-vue3';
 
 export default {
   name: 'AccountInfoTab',
-  components: { AgGridVue },
   data() {
     return {
       snapshot: null,
       openPositions: [],
       positionsLastUpdate: null,
-      positionsColumnDefs: [
-        { field: 'symbol', headerName: 'Symbol' },
-        { field: 'quantity', headerName: 'Quantity' },
-        { field: 'avg_price', headerName: 'Avg Price' },
-        { field: 'account', headerName: 'Account' },
-        { field: 'last_update', headerName: 'Last Update' },
-      ],
+      positionsColumns: [
+        { name: 'symbol', label: 'Symbol', field: 'symbol', align: 'center' },
+        { name: 'quantity', label: 'Quantity', field: 'quantity', align: 'center' },
+        { name: 'avg_price', label: 'Avg Price', field: 'avg_price', align: 'center' },
+        { name: 'account', label: 'Account', field: 'account', align: 'center' },
+        { name: 'last_update', label: 'Last Update', field: 'last_update', align: 'center' },
+      ]
     };
   },
   computed: {
@@ -70,7 +67,7 @@ export default {
         { label: 'Realized PnL', value: this.formatDollar(this.snapshot.realized_pnl), class: this.snapshot.realized_pnl >= 0 ? 'pnl-positive' : 'pnl-negative' },
         { label: 'Margin Ratio', value: this.getMarginRatio() },
       ];
-    },
+    }
   },
   methods: {
     async loadSnapshot() {
@@ -102,12 +99,12 @@ export default {
     formatTimestamp(timestamp) {
       const date = new Date(timestamp);
       return date.toLocaleString();
-    },
+    }
   },
   mounted() {
     this.loadSnapshot();
     this.loadOpenPositions();
-  },
+  }
 };
 </script>
 
@@ -175,10 +172,9 @@ span {
   color: #e53935;
 }
 
-.ag-theme-alpine-dark {
-  --ag-background-color: #2c2c2c;
-  --ag-foreground-color: #e0e0e0;
-  --ag-header-background-color: #1f1f1f;
-  --ag-header-foreground-color: #ccc;
+.my-quasar-table {
+  background-color: #2c2c2c;
+  color: #e0e0e0;
+  border-radius: 8px;
 }
 </style>
