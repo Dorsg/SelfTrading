@@ -176,5 +176,12 @@ span {
   background-color: #2c2c2c;
   color: #e0e0e0;
   border-radius: 8px;
+  font-size: 1.1rem;
+}
+
+.my-quasar-table .q-td,
+.my-quasar-table .q-th {
+  padding: 14px 12px;
+  font-size: 2.2rem;
 }
 </style>

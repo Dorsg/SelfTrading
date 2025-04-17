@@ -2,16 +2,16 @@
   <div>
     <q-tabs
       v-model="selectedTab"
-      class="bg-dark text-white q-mb-md"
-      indicator-color="primary"
+      class="custom-tabs bg-dark text-white q-mb-md"
       dense
-      align="left" 
+      align="left"
     >
       <q-tab
         v-for="(tab, index) in tabs"
         :key="index"
         :label="tab.label"
         :name="index"
+        class="custom-tab"
       />
     </q-tabs>
 
@@ -25,12 +25,14 @@
 import AccountInfoTab from './tabs/AccountInfoTab.vue';
 import OrdersTab from './tabs/OrdersTab.vue';
 import RunnersTab from './tabs/RunnersTab.vue';
+import TradesTab from './tabs/TradesTab.vue';
 import EmptyTab from './tabs/EmptyTab.vue';
 
 export default {
   components: {
     AccountInfoTab,
     OrdersTab,
+    TradesTab,
     RunnersTab,
     EmptyTab
   },
@@ -40,10 +42,9 @@ export default {
       tabs: [
         { label: 'Account Information', component: 'AccountInfoTab' },
         { label: 'Orders', component: 'OrdersTab' },
+        { label: 'Trades', component: 'TradesTab' },
         { label: 'Runners', component: 'RunnersTab' },
         { label: 'Tab 3', component: 'EmptyTab' },
-        { label: 'Tab 4', component: 'EmptyTab' },
-        { label: 'Tab 5', component: 'EmptyTab' }
       ]
     };
   }
@@ -51,11 +52,33 @@ export default {
 </script>
 
 <style scoped>
-.tab-content {
-  background-color: #222;
-  padding: 20px;
-  border-radius: 0 6px 6px 6px;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
-  color: #ccc;
+.custom-tabs {
+  --q-tabs-color: #00d1b2; /* active underline & text color */
+  --q-tabs-tab-font-size: 16px;
+  --q-tabs-padding: 0;
+  border-bottom: 1px solid #444;
+}
+
+.custom-tab {
+  text-transform: none; /* disable ALL CAPS */
+  font-weight: 500;
+  font-size: 16px;
+  padding: 12px 16px;
+  min-height: 36px;
+  transition: all 0.2s ease-in-out;
+}
+
+.custom-tab.q-tab--active {
+  color: #00d1b2;
+}
+
+.custom-tab.q-tab--active::after {
+  height: 2px; /* thinner underline */
+  background-color: #00d1b2;
+  border-radius: 1px;
+}
+
+.q-tab__label {
+  letter-spacing: 0.5px;
 }
 </style>

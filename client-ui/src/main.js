@@ -5,6 +5,7 @@ import App from './App.vue'
 import { Quasar } from 'quasar'
 import 'quasar/dist/quasar.css'
 import '@quasar/extras/material-icons/material-icons.css'
+import '@/css/darkTable.css'
 
 // ✅ Manually import Quasar components you use
 import {

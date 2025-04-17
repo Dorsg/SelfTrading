@@ -25,7 +25,7 @@ def run_scheduler():
     logger.info("Scheduler started")
     schedule.every(1).minutes.at(":00").do(safe_job(handle_daily_snapshot))
     schedule.every(1).minutes.at(":10").do(safe_job(update_open_positions))
-    schedule.every(1).minutes.at(":20").do(safe_job(place_test_order))
+    schedule.every(5).minutes.at(":20").do(safe_job(place_test_order))
     schedule.every(1).minutes.at(":30").do(safe_job(sync_ibkr_orders))
     schedule.every(1).minutes.at(":40").do(safe_job(sync_ibkr_executed_trades))
 
@@ -71,8 +71,7 @@ def update_open_positions():
 def place_test_order():
     logger.info("Placing test stop order...")
     try:
-        result = ib.place_test_aggressive_limit(123)
-        logger.info("Test order result: %s", result)
+        ib.place_test_aggressive_limit(123)
     except Exception:
         logger.exception("Failed in place_test_order()")
 

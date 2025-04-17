@@ -70,7 +70,6 @@ class IBManager:
         try:
             ib_positions = self.ib.positions() 
             for pos in ib_positions:
-                logger.info("Position: %s", pos)
                 positions_data.append({
                     'symbol': pos.contract.symbol,
                     'quantity': pos.position,
@@ -247,7 +246,6 @@ class IBManager:
         try:
             open_trades = self.ib.trades()
             order_data_list = []
-            logger.info("Order to sync: %s", open_trades)
             if not open_trades: 
                 logger.warning("No orders found in IBKR.")
                 return
@@ -287,7 +285,6 @@ class IBManager:
         try:
             trades = self.ib.trades()
             executed_trades = []
-            logger.info("trades to sync: %s", trades)
             if not trades:
                 logger.warning("No trades found in IBKR.")
                 return

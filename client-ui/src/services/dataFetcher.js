@@ -21,3 +21,23 @@ export async function fetchOpenPositions() {
     throw error;
   }
 }
+
+export async function fetchOrders() {
+  try {
+    const response = await axios.get(`${BASE_URL}/orders`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    throw error;
+  }
+}
+
+export async function fetchExecutedTrades() {
+  try {
+    const response = await axios.get(`${BASE_URL}/executed-trades`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching executed trades:', error);
+    throw error;
+  }
+}

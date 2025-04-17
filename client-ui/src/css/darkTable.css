@@ -1,0 +1,7 @@
+.my-quasar-table thead tr {
+    background-color: #444;
+  }
+  .my-quasar-table td,
+  .my-quasar-table th {
+    text-align: center;
+  }
