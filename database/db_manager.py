@@ -146,3 +146,18 @@ class DBManager:
             self.db.rollback()
         finally:
             self.close()
+
+    def get_all_orders(self):
+        try:
+            return self.db.query(Order).order_by(Order.created_at.desc()).all()
+        except Exception:
+            logger.exception("DB: Failed to fetch orders")
+            return []
+
+
+    def get_all_executed_trades(self):
+        try:
+            return self.db.query(ExecutedTrade).order_by(ExecutedTrade.fill_time.desc()).all()
+        except Exception:
+            logger.exception("DB: Failed to fetch executed trades")
+            return []

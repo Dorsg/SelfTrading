@@ -53,3 +53,34 @@ def get_open_positions():
         logger.exception("Failed to retrieve open positions")
         raise HTTPException(status_code=500, detail="Failed to retrieve positions")
 
+
+@router.get("/orders")
+def get_all_orders():
+    """
+    Retrieves all saved IBKR orders from the database.
+    """
+    dbm = DBManager()
+    try:
+        orders = dbm.get_all_orders()
+        return [o.__dict__ for o in orders]
+    except Exception:
+        logger.exception("Failed to retrieve orders")
+        raise HTTPException(status_code=500, detail="Failed to retrieve orders")
+    finally:
+        dbm.close()
+
+
+@router.get("/executed-trades")
+def get_all_executed_trades():
+    """
+    Retrieves all executed trades from the database.
+    """
+    dbm = DBManager()
+    try:
+        trades = dbm.get_all_executed_trades()
+        return [t.__dict__ for t in trades]
+    except Exception:
+        logger.exception("Failed to retrieve executed trades")
+        raise HTTPException(status_code=500, detail="Failed to retrieve executed trades")
+    finally:
+        dbm.close()
