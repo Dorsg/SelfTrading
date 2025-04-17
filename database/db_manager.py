@@ -2,13 +2,23 @@ import logging
 from datetime import datetime, date
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from database.models import AccountSnapshot, OpenPosition
+from database.db_core import SessionLocal
+from database.models import AccountSnapshot, ExecutedTrade, OpenPosition, Order
 
 logger = logging.getLogger(__name__)
 
 class DBManager:
-    def __init__(self, db_session: Session):
-        self.db = db_session
+    def __init__(self, db_session: Session = None):
+        self._own_session = False
+        if db_session is None:
+            self.db = SessionLocal()
+            self._own_session = True
+        else:
+            self.db = db_session
+
+    def close(self):
+        if self._own_session:
+            self.db.close()
 
     def get_today_snapshot(self):
         today = date.today()
@@ -40,6 +50,8 @@ class DBManager:
             logger.exception("Failed to insert account snapshot.")
             self.db.rollback()
             return None
+        finally:
+            self.close()
 
     def update_open_positions(self, positions: list):
         try:
@@ -57,6 +69,8 @@ class DBManager:
         except Exception:
             logger.exception("Failed to update open positions.")
             self.db.rollback()
+        finally:
+            self.close()
 
     def get_open_positions(self):
         try:
@@ -65,3 +79,70 @@ class DBManager:
         except Exception:
             logger.exception("Failed to fetch open positions from the database.")
             return []
+        finally:
+            self.close()
+
+
+    def save_order(self, order_data: dict):
+        try:
+            order = Order(
+                runner_id=order_data["runner_id"],
+                ibkr_perm_id=order_data["ibkr_perm_id"],
+                symbol=order_data["symbol"],
+                action=order_data["action"],
+                order_type=order_data["order_type"],
+                quantity=order_data["quantity"],
+                limit_price=order_data.get("limit_price"),
+                stop_price=order_data.get("stop_price"),
+                status=order_data.get("status"),
+                filled_quantity=order_data.get("filled_quantity"),
+                avg_fill_price=order_data.get("avg_fill_price"),
+                account=order_data.get("account"),
+            )
+            self.db.add(order)
+            self.db.commit()
+            logger.info("Order saved successfully (IBKR ID: %s)", order.ibkr_perm_id)
+            return order
+        except Exception:
+            logger.exception("Failed to save order to database.")
+            self.db.rollback()
+            return None
+        finally:
+            self.close()
+
+    def sync_orders(self, orders: list[dict]):
+        """
+        Inserts or updates orders in the database based on permId.
+        """
+        try:
+            for order_data in orders:
+                perm_id = order_data["ibkr_perm_id"]
+                existing = self.db.query(Order).filter(Order.ibkr_perm_id == perm_id).first()
+
+                if existing:
+                    for key, value in order_data.items():
+                        setattr(existing, key, value)
+                    logger.info("Updated order (permId: %s)", perm_id)
+                else:
+                    new_order = Order(**order_data)
+                    self.db.add(new_order)
+                    logger.info("Inserted new order (permId: %s)", perm_id)
+
+            self.db.commit()
+        except Exception:
+            logger.exception("Failed to sync orders to database.")
+            self.db.rollback()
+        finally:
+            self.close()
+
+    def save_executed_trades(self, trades: list[dict]):
+        try:
+            for t in trades:
+                self.db.add(ExecutedTrade(**t))
+            self.db.commit()
+            logger.info("Executed trades saved: %d", len(trades))
+        except Exception:
+            logger.exception("Failed to save executed trades")
+            self.db.rollback()
+        finally:
+            self.close()

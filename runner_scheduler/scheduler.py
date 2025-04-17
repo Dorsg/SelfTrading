@@ -1,8 +1,8 @@
 import schedule
 import time
 import logging
+import threading
 from logger_config import setup_logging
-from database.db_core import SessionLocal
 from database.db_manager import DBManager
 from ib_manager.ib_connector import IBManager
 from strategy_engine.strategy_manager import StrategyManager
@@ -12,11 +12,22 @@ logger = logging.getLogger(__name__)
 
 ib = IBManager()
 strategy_manager = StrategyManager()
+scheduler_lock = threading.Lock()
+
+# --- Wrapper ---
+def safe_job(job_func):
+    def wrapped():
+        with scheduler_lock:
+            job_func()
+    return wrapped
 
 def run_scheduler():
     logger.info("Scheduler started")
-    schedule.every(1).minutes.do(handle_daily_snapshot)
-    schedule.every(1).minutes.do(update_open_positions)
+    schedule.every(1).minutes.at(":00").do(safe_job(handle_daily_snapshot))
+    schedule.every(1).minutes.at(":10").do(safe_job(update_open_positions))
+    schedule.every(1).minutes.at(":20").do(safe_job(place_test_order))
+    schedule.every(1).minutes.at(":30").do(safe_job(sync_ibkr_orders))
+    schedule.every(1).minutes.at(":40").do(safe_job(sync_ibkr_executed_trades))
 
     while True:
         schedule.run_pending()
@@ -24,8 +35,7 @@ def run_scheduler():
 
 def handle_daily_snapshot():
     logger.info("Checking for daily account snapshot...")
-    db_session = SessionLocal()
-    db = DBManager(db_session)
+    db = DBManager()
 
     try:
         existing = db.get_today_snapshot()
@@ -41,13 +51,11 @@ def handle_daily_snapshot():
         db.create_account_snapshot(snapshot_data)
     except Exception:
         logger.exception("Failed in handle_daily_snapshot()")
-    finally:
-        db_session.close()
+
 
 def update_open_positions():
     logger.info("Updating open positions...")
-    db_session = SessionLocal()
-    db = DBManager(db_session)
+    db = DBManager()
 
     try:
         positions = ib.get_open_positions()
@@ -57,5 +65,27 @@ def update_open_positions():
             logger.warning("No open positions returned.")
     except Exception:
         logger.exception("Failed in update_open_positions()")
-    finally:
-        db_session.close()
+
+
+
+def place_test_order():
+    logger.info("Placing test stop order...")
+    try:
+        result = ib.place_test_aggressive_limit(123)
+        logger.info("Test order result: %s", result)
+    except Exception:
+        logger.exception("Failed in place_test_order()")
+
+def sync_ibkr_orders():
+    logger.info("Syncing live orders from IBKR...")
+    try:
+        ib.sync_orders_from_ibkr()
+    except Exception:
+        logger.exception("Failed to sync IBKR orders")
+
+def sync_ibkr_executed_trades():
+    logger.info("Syncing executed trades from IBKR...")
+    try:
+        ib.sync_executed_trades()
+    except Exception:
+        logger.exception("Failed to sync executed trades")

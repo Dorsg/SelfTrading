@@ -31,3 +31,38 @@ class OpenPosition(Base):
     avg_price = Column(Float, nullable=False)
     account = Column(String, nullable=False)
     last_update = Column(DateTime, default=datetime.utcnow)
+
+class Order(Base):
+    __tablename__ = 'orders'
+
+    id = Column(Integer, primary_key=True, index=True)
+    runner_id = Column(Integer, nullable=False, index=True)
+    ibkr_perm_id = Column(Integer, nullable=False, unique=True, index=True)
+
+    symbol = Column(String, nullable=False)
+    action = Column(String, nullable=False)  # e.g. 'BUY' or 'SELL'
+    order_type = Column(String, nullable=False)  # e.g. 'LIMIT', 'STOP', etc.
+    quantity = Column(Float, nullable=False)
+    limit_price = Column(Float, nullable=True)
+    stop_price = Column(Float, nullable=True)
+
+    status = Column(String, nullable=True)  # e.g. 'Submitted', 'Filled', etc.
+    filled_quantity = Column(Float, nullable=True)
+    avg_fill_price = Column(Float, nullable=True)
+
+    account = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class ExecutedTrade(Base):
+    __tablename__ = 'executed_trades'
+
+    id = Column(Integer, primary_key=True)
+    perm_id = Column(Integer, index=True)
+    symbol = Column(String)
+    action = Column(String)
+    order_type = Column(String) 
+    quantity = Column(Float)
+    price = Column(Float)
+    fill_time = Column(DateTime)
+    account = Column(String)
