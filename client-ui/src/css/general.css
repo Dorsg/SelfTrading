@@ -1,0 +1,135 @@
+/* ───────────  GLOBAL DESIGN TOKENS  ─────────── */
+:root {
+  --primary-color: #00d1b2;
+  --positive-color: #4caf50;
+  --negative-color: #e53935;
+
+  --bg-dark: #2d2d2d;
+  --bg-medium: #333;
+  --bg-light: #444;
+
+  --text-light: #e0e0e0;
+  --text-muted: #bbb;
+
+  --card-radius: 8px;
+  --transition-fast: 0.2s ease-in-out;
+}
+
+/* ───────────  LAYOUT HELPERS  ─────────── */
+.page-wrapper {
+  padding: 10px;
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+}
+
+/* Header with title + timestamp */
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.header-bar h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--primary-color);
+}
+.last-updated {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* Simple row container (e.g. button rows) */
+.header-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 15px;
+}
+
+/* Cards & grids */
+.card,
+.dark-card {
+  background-color: var(--bg-medium);
+  padding: 16px;
+  border-radius: var(--card-radius);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  color: var(--text-light);
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+/* Text helpers */
+label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+span {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.highlight       { color: var(--primary-color); }
+.pnl-positive    { color: var(--positive-color); }
+.pnl-negative    { color: var(--negative-color); }
+
+/* ───────────  QUASAR TABS  ─────────── */
+.custom-tabs {
+  --q-tabs-color: var(--primary-color);
+  --q-tabs-tab-font-size: 16px;
+  --q-tabs-padding: 0;
+  border-bottom: 1px solid var(--bg-light);
+}
+.custom-tab {
+  text-transform: none;
+  font-weight: 500;
+  font-size: 16px;
+  padding: 12px 16px;
+  min-height: 36px;
+  transition: all var(--transition-fast);
+}
+.custom-tab.q-tab--active       { color: var(--primary-color); }
+.custom-tab.q-tab--active::after{
+  height: 2px;
+  background-color: var(--primary-color);
+  border-radius: 1px;
+}
+
+/* ───────────  QUASAR TABLE  ─────────── */
+.my-quasar-table {
+  background-color: var(--bg-medium);
+  color: var(--text-light);
+  border-radius: var(--card-radius);
+  font-size: 1rem;
+}
+.my-quasar-table thead tr       { background-color: var(--bg-light); }
+.my-quasar-table td,
+.my-quasar-table th             { text-align: center; padding: 14px 12px; }
+
+/* ───────────  AG‑GRID DARK OVERRIDES  ─────────── */
+.ag-theme-alpine-dark {
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+}
+.ag-theme-alpine-dark .ag-header-cell { background-color: var(--bg-light); }
+.ag-theme-alpine-dark .ag-row         { background-color: var(--bg-medium); }
+.ag-theme-alpine-dark .ag-row:hover   { background-color: #555; }
+.ag-theme-alpine-dark .ag-cell        { color: var(--text-light); }
+
+/* ───────────  BUTTONS  ─────────── */
+.primary-btn {
+  background-color: var(--primary-color);
+  color: #fff;
+  font-weight: bold;
+  border-radius: var(--card-radius);
+  padding: 10px 20px;
+  cursor: pointer;
+  text-transform: none;
+  transition: background-color var(--transition-fast);
+}
+.primary-btn:hover  { background-color: #009688; }
+.primary-btn:active { background-color: #00796b; }

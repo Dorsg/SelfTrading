@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -55,14 +55,17 @@ class Order(Base):
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class ExecutedTrade(Base):
-    __tablename__ = 'executed_trades'
+    __tablename__ = "executed_trades"
+    __table_args__ = (
+        UniqueConstraint("perm_id", "fill_time", name="uix_perm_id_fill_time"),
+    )
 
-    id = Column(Integer, primary_key=True)
-    perm_id = Column(Integer, index=True)
-    symbol = Column(String)
-    action = Column(String)
-    order_type = Column(String) 
-    quantity = Column(Float)
-    price = Column(Float)
-    fill_time = Column(DateTime)
-    account = Column(String)
+    id         = Column(Integer, primary_key=True)
+    perm_id    = Column(Integer, index=True)          # same as order.permId
+    symbol     = Column(String)
+    action     = Column(String)
+    order_type = Column(String)
+    quantity   = Column(Float)
+    price      = Column(Float)
+    fill_time  = Column(DateTime)                     # IBKR gives UTC tz‑aware dt
+    account    = Column(String)

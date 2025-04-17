@@ -134,15 +134,39 @@ class DBManager:
             self.db.rollback()
         finally:
             self.close()
-
-    def save_executed_trades(self, trades: list[dict]):
+            
+    def sync_executed_trades(self, trades: list[dict]):
+        """
+        Insert new fills; update the row if (perm_id, fill_time) already exists.
+        """
         try:
             for t in trades:
-                self.db.add(ExecutedTrade(**t))
+                perm_id   = t["perm_id"]
+                fill_time = t["fill_time"]
+
+                existing = (
+                    self.db.query(ExecutedTrade)
+                    .filter(
+                        ExecutedTrade.perm_id == perm_id,
+                        ExecutedTrade.fill_time == fill_time,
+                    )
+                    .first()
+                )
+
+                if existing:
+                    # update in‑place
+                    for k, v in t.items():
+                        setattr(existing, k, v)
+                    logger.debug("Updated fill (perm=%s  time=%s)", perm_id, fill_time)
+                else:
+                    self.db.add(ExecutedTrade(**t))
+                    logger.debug("Inserted new fill (perm=%s  time=%s)", perm_id, fill_time)
+
             self.db.commit()
-            logger.info("Executed trades saved: %d", len(trades))
+            logger.info("Executed‑trades sync complete (rows processed: %d)", len(trades))
+
         except Exception:
-            logger.exception("Failed to save executed trades")
+            logger.exception("Failed to sync executed trades")
             self.db.rollback()
         finally:
             self.close()

@@ -280,30 +280,33 @@ class IBManager:
 
     def sync_executed_trades(self):
         """
-        Extracts all fills from current trades and stores them in the executed_trades table.
+        Pull fills from IBKR and up‑sert them via DBManager.
         """
         try:
             trades = self.ib.trades()
-            executed_trades = []
             if not trades:
-                logger.warning("No trades found in IBKR.")
+                logger.warning("No trades returned from IBKR.")
                 return
-            for trade in trades:
-                for fill in trade.fills:
-                    executed_trades.append({
-                        "perm_id": trade.order.permId,
-                        "symbol": trade.contract.symbol,
-                        "action": trade.order.action,
-                        "order_type": trade.order.orderType,
-                        "quantity": fill.execution.shares,
-                        "price": fill.execution.price,
-                        "fill_time": fill.time,
-                        "account": fill.execution.acctNumber,
-                    })
 
-            if executed_trades:
-                db = DBManager()
-                db.save_executed_trades(executed_trades)
-                db.close()
+            fills = []
+            for trade in trades:
+                perm_id = trade.order.permId
+                for fill in trade.fills:
+                    fills.append(
+                        {
+                            "perm_id":   perm_id,
+                            "symbol":    trade.contract.symbol,
+                            "action":    trade.order.action,
+                            "order_type": trade.order.orderType,
+                            "quantity":  fill.execution.shares,
+                            "price":     fill.execution.price,
+                            "fill_time": fill.time,              # timezone‑aware dt
+                            "account":   fill.execution.acctNumber,
+                        }
+                    )
+
+            if fills:
+                DBManager().sync_executed_trades(fills)
+
         except Exception:
-            logger.exception("Failed to sync executed trades.")
+            logger.exception("Failed to sync executed trades with DB.")

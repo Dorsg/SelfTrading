@@ -1,6 +1,5 @@
 <template>
-  <div class="orders-tab">
-    <!-- Styled header to match Account Overview -->
+  <div class="orders-tab page-wrapper">
     <div class="header-bar">
       <h2>Orders</h2>
       <div v-if="ordersLastUpdate" class="last-updated">
@@ -8,7 +7,6 @@
       </div>
     </div>
 
-    <!-- AG Grid Community -->
     <ag-grid-vue
       class="ag-theme-alpine-dark"
       style="width: 100%; height: 500px"
@@ -29,9 +27,7 @@ import { fetchOrders } from '@/services/dataFetcher';
 
 export default {
   name: 'OrdersTab',
-  components: {
-    AgGridVue
-  },
+  components: { AgGridVue },
   data() {
     return {
       orders: [],
@@ -58,69 +54,14 @@ export default {
       try {
         const data = await fetchOrders();
         this.orders = data;
-        if (data.length) {
-          this.ordersLastUpdate = data[0].last_updated;
-        }
+        if (data.length) this.ordersLastUpdate = data[0].last_updated;
       } catch (err) {
         console.error('Failed to fetch orders:', err);
       }
     },
-    formatTimestamp(ts) {
-      return new Date(ts).toLocaleString();
-    },
-    onGridReady(params) {
-      params.api.sizeColumnsToFit();
-    }
+    formatTimestamp(ts) { return new Date(ts).toLocaleString(); },
+    onGridReady(params) { params.api.sizeColumnsToFit(); }
   },
-  mounted() {
-    this.loadOrders();
-  }
+  mounted() { this.loadOrders(); }
 };
 </script>
-
-<style scoped>
-h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #00d1b2;
-}
-
-.orders-tab {
-  padding: 10px;
-  background-color: #2d2d2d;
-  color: #fff;
-}
-
-.header-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.last-updated {
-  font-size: 0.85rem;
-  color: #bbb;
-}
-
-.ag-theme-alpine-dark {
-  background-color: #2d2d2d;
-  color: #e0e0e0;
-}
-
-.ag-header-cell {
-  background-color: #444;
-}
-
-.ag-row {
-  background-color: #333;
-}
-
-.ag-row:hover {
-  background-color: #555;
-}
-
-.ag-cell {
-  color: #ccc;
-}
-</style>
