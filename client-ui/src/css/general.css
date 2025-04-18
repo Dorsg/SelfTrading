@@ -4,12 +4,12 @@
   --positive-color: #4caf50;
   --negative-color: #e53935;
 
-  --bg-dark: #2d2d2d;
+  --bg-dark:   #2d2d2d;
   --bg-medium: #333;
-  --bg-light: #444;
+  --bg-light:  #444;
 
-  --text-light: #e0e0e0;
-  --text-muted: #bbb;
+  --text-light:  #e0e0e0;
+  --text-muted:  #bbb;
 
   --card-radius: 8px;
   --transition-fast: 0.2s ease-in-out;
@@ -112,9 +112,38 @@ span {
 
 /* ───────────  AG‑GRID DARK OVERRIDES  ─────────── */
 .ag-theme-alpine-dark {
-  background-color: var(--bg-dark);
+  background-color: var(--bg-medium);   /* lighter than bg-dark for contrast */
   color: var(--text-light);
+  font-size: 0.85rem;                  /* body cells */
+  overflow-x: hidden;                  /* kill horizontal scroll */
+
+  /* Rounded, card‑style container */
+  border: 2px solid var(--bg-light);   /* thicker border */
+  border-radius: var(--card-radius);
+  overflow: hidden;                    /* clip rounded corners */
+
+  /* Optional AG Grid CSS vars (v28+) */
+  --ag-header-background-color: #3d3d3d;
+  --ag-odd-row-background-color: #393939;
+  --ag-row-hover-color: #555;
+  --ag-border-color: transparent;
 }
+
+/* Zebra striping for readability */
+.ag-theme-alpine-dark .ag-row:nth-child(even) {
+  background-color: #303030;
+}
+
+/* Smaller header text — override every level */
+.ag-theme-alpine-dark .ag-header-cell,
+.ag-theme-alpine-dark .ag-header-group-cell,
+.ag-theme-alpine-dark .ag-header-cell-label,
+.ag-theme-alpine-dark .ag-header-cell-text {
+  font-size: 0.85rem !important; /* ≈12px */
+  line-height: 1.25;
+  font-weight: 500;
+}
+
 .ag-theme-alpine-dark .ag-header-cell { background-color: var(--bg-light); }
 .ag-theme-alpine-dark .ag-row         { background-color: var(--bg-medium); }
 .ag-theme-alpine-dark .ag-row:hover   { background-color: #555; }

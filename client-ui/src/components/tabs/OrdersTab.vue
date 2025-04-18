@@ -11,6 +11,7 @@
       class="ag-theme-alpine-dark"
       style="width: 100%; height: 500px"
       :columnDefs="columnDefs"
+      :defaultColDef="defaultColDef" 
       :rowData="orders"
       rowSelection="single"
       :animateRows="true"
@@ -32,6 +33,7 @@ export default {
     return {
       orders: [],
       ordersLastUpdate: null,
+      defaultColDef: { flex: 1, minWidth: 100, resizable: true }, 
       columnDefs: [
         { headerName: 'ID', field: 'id' },
         { headerName: 'Symbol', field: 'symbol' },
@@ -55,12 +57,17 @@ export default {
         const data = await fetchOrders();
         this.orders = data;
         if (data.length) this.ordersLastUpdate = data[0].last_updated;
+        this.$nextTick(() => this.gridApi.sizeColumnsToFit()); 
       } catch (err) {
         console.error('Failed to fetch orders:', err);
       }
     },
     formatTimestamp(ts) { return new Date(ts).toLocaleString(); },
-    onGridReady(params) { params.api.sizeColumnsToFit(); }
+    onGridReady(params) { 
+      this.gridApi = params.api;
+      this.gridApi.sizeColumnsToFit();                         // initial fit
+      window.addEventListener('resize', () => this.gridApi.sizeColumnsToFit());
+    }
   },
   mounted() { this.loadOrders(); }
 };
