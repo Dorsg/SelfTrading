@@ -117,12 +117,18 @@ span {
   text-align: center;
   padding: 12px;
 }
-/* smaller pager */
-.my-quasar-table .q-table__bottom {
-  font-size: 0.85rem;
+
+
+.my-quasar-table .q-table__bottom .q-btn,
+.my-quasar-table .q-table__bottom .q-select {
+  height: 24px !important;   
+  min-height: 24px !important;
 }
-.my-quasar-table .q-table__control label {
-  font-size: 0.85rem;
+
+.my-quasar-table .q-table__bottom,
+.my-quasar-table .q-table__bottom * {
+  font-size: 0.75rem !important;   
+  line-height: 1rem   !important;
 }
 
 /* ───────────  AG‑GRID DARK OVERRIDES  ─────────── */
@@ -163,43 +169,125 @@ span {
   color: var(--text-light);
 }
 
-/* Pagination panel (updated) */
-.ag-theme-alpine-dark .ag-paging-panel {
-  font-size: 0.85rem;
-  padding: 4px 8px;
-  background-color: #3b3b3b;
-  border-top: 1px solid #5a5a5a;
-}
-.ag-theme-alpine-dark .ag-paging-button,
-.ag-theme-alpine-dark .ag-paging-number {
-  font-size: 0.85rem;
-  padding: 2px 6px;
-  margin: 0 2px;
-  color: var(--text-light);
-}
-.ag-theme-alpine-dark .ag-paging-button:hover {
-  background-color: #4a4a4a;
-  border-radius: 4px;
-  cursor: pointer;
+.header-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
-/* ───────────  BUTTONS  ─────────── */
-.primary-btn {
-  background: var(--primary-color);
-  color: #fff;
-  font-weight: bold;
-  border-radius: var(--card-radius);
-  padding: 10px 20px;
-  cursor: pointer;
-  text-transform: none;
-  transition-property: background;
-  transition-duration: 0.2s;
-  transition-timing-function: ease-in-out;
-  transition-delay: 0s;
+/* ──────────────────  create runners button  ─────────── */
+
+.primary-btn.q-btn {
+  /* gradient background */
+  background: linear-gradient(135deg, #00d1b2 0%, #008c8b 100%) !important;
+  color: #1e1e2f !important;
+  padding: 1px 2px  !important;
+  margin: 3px 0 !important;
+  font-weight: 400 !important;
+  font-size: 0.55rem !important;
+  border-radius: 12px !important;
+  text-transform: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
+  transition: 
+    background 0.3s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease !important;
 }
-.primary-btn:hover {
-  background: #009688;
+
+/* hover: lift up + brighter gradient */
+.primary-btn.q-btn:hover {
+  background: linear-gradient(135deg, #00c5bd 0%, #00b89c 100%) !important;
+  transform: translateY(-3px) scale(1.03) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4) !important;
 }
-.primary-btn:active {
-  background: #00796b;
+
+/* active/click: press in */
+.primary-btn.q-btn:active {
+  transform: translateY(0) scale(0.98) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* icon bounce on hover */
+.primary-btn.q-btn:hover .q-icon {
+  transform: rotate(-20deg) scale(1.2);
+  transition: transform 0.2s ease;
+}
+
+
+/* ───────────  CUSTOM TABS  ─────────── */
+
+/* Tabs wrapper: lighter grey */
+.custom-tabs {
+  background: var(--bg-light);       /* #333: softer than black but still contrasty */
+  border-bottom: 1px solid var(--bg-light);
+
+}
+
+/* Tab labels */
+.custom-tab {
+  color: var(--text-muted);         /* softer grey text */
+  padding: 10px 30px;  
+  transition: 
+    background var(--transition-fast), 
+    color var(--transition-fast);
+}
+
+/* Hover state: light primary tint */
+.custom-tab:hover {
+  color: var(--text-light);
+  background: rgba(0, 209, 178, 0.1);
+  border-radius: 4px 4px 0 0;
+}
+
+/* Active tab: stronger primary tint */
+.custom-tab.q-tab--active {
+  color: var(--text-light);
+  background: rgba(0, 209, 178, 0.2);
+  border-radius: 4px 4px 0 0;
+}
+
+/* Remove the old underline indicator */
+.custom-tab.q-tab--active::after {
+  display: none;
+}
+
+/* Ensure labels stay in sentence case */
+.q-tabs .q-tab .q-tab__label {
+  text-transform: none !important;
+}
+
+/* ─── AG‑GRID  pagination bar : small font ───────────────────── */
+.ag-theme-alpine-dark .ag-paging-panel,
+.ag-theme-alpine-dark .ag-paging-panel * {
+  font-size: 0.75rem !important;   /* ≈ 12 px */
+  line-height: 1rem !important;
+}
+
+.ag-theme-alpine-dark .ag-paging-nav-button {
+  height: 22px !important;         /* slimmer buttons */
+  min-height: 22px !important;
+  padding: 2px 6px !important;     /* tighter horizontal space */
+}
+
+.ag-theme-alpine-dark .ag-paging-panel {
+  background: #4d4d4d;                  /* same shade as header */
+  border-top: 1px solid #707070;        /* subtle divider (optional) */
+  height: 28px !important;              /* consistent height */
+  min-height: 28px !important;
+  padding: 0 8px;                       /* tighten side space */
+  display: flex;                        /* vertical centring */
+  align-items: center;
+}
+
+.ag-theme-alpine-dark .ag-paging-panel * {
+  font-size: 0.75rem !important;        /* keep small text */
+  line-height: 1rem  !important;
+}
+
+.ag-theme-alpine-dark .ag-paging-nav-button {
+  height: 22px !important;              /* buttons stay petite */
+  min-height: 22px !important;
+  padding: 2px 6px !important;
 }

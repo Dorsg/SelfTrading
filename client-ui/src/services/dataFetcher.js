@@ -8,7 +8,7 @@ export async function fetchAccountSnapshot() {
     return response.data;
   } catch (error) {
     console.error('Error fetching account snapshot:', error);
-    throw error;
+    return null;
   }
 }
 
@@ -18,7 +18,7 @@ export async function fetchOpenPositions() {
     return response.data;
   } catch (error) {
     console.error('Error fetching open positions:', error);
-    throw error;
+    return null;
   }
 }
 
@@ -28,7 +28,7 @@ export async function fetchOrders() {
     return response.data;
   } catch (error) {
     console.error('Error fetching orders:', error);
-    throw error;
+    return null;
   }
 }
 
@@ -38,6 +38,6 @@ export async function fetchExecutedTrades() {
     return response.data;
   } catch (error) {
     console.error('Error fetching executed trades:', error);
-    throw error;
+    return null;
   }
 }

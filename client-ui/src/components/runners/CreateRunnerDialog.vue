@@ -1,158 +1,292 @@
 <template>
-    <QDialog v-model="isOpen" persistent transition-show="scale" transition-hide="scale">
-      <QCard class="dialog-card">
-        <QCardSection class="q-pa-sm">
-          <div class="text-h6 text-primary">Create New Runner</div>
-        </QCardSection>
-  
-        <QSeparator dark />
-  
-        <QCardSection class="form-section">
-          <QForm @submit.prevent="submitForm" class="q-gutter-sm">
-            <div v-for="(field, key) in formFields" :key="key">
-              <QInput
-                v-if="field.type !== 'checkbox'"
-                v-model="localForm[key]"
-                :label="field.label"
-                :type="field.type"
-                dense
-                outlined
-                color="primary"
-                dark
-                :rules="[val => !!val || 'Required']"
-              />
-  
-              <QCheckbox
-                v-else
-                v-model="localForm[key]"
-                :label="field.label"
-                color="primary"
-                dark
-              />
-            </div>
-          </QForm>
-        </QCardSection>
-  
-        <QCardSection class="dialog-actions">
-          <QBtn flat label="Cancel" color="negative" @click="$emit('close')" />
-          <QBtn type="submit" label="Create" color="primary" @click="submitForm" />
-        </QCardSection>
-      </QCard>
-    </QDialog>
-  </template>
-  
-  <script>
-  export default {
-    name: "CreateRunnerDialog",
-    props: ["defaultData"],
-    emits: ["close", "created"],
-    data() {
-      return {
-        isOpen: true,
-        localForm: { ...this.defaultData },
-        formFields: {
-          symbol: { label: "Symbol", type: "text" },
-          is_active: { label: "Is Active", type: "checkbox" },
-          atrategy: { label: "Strategy", type: "text" },
-          stock_symbol: { label: "Stock Symbol", type: "text" },
-          strategy_name: { label: "Strategy Name", type: "text" },
-          time_frame: { label: "Time Frame", type: "number" },
-          max_loss_perc: { label: "Max Loss %", type: "number" },
-          take_profit_perc: { label: "Take Profit %", type: "number" },
-          date_range: { label: "Date Range", type: "text" },
-          stock_number_limit: { label: "Stock Limit", type: "number" },
-        },
-      };
-    },
-    methods: {
-      submitForm() {
-        const newRunner = {
-          id: Date.now(),
-          created_at: new Date().toISOString().slice(0, 10),
-          ...this.localForm,
-        };
-        this.$emit("created", newRunner);
-        this.$emit("close");
+  <q-dialog v-model="isOpen" persistent transition-show="scale" transition-hide="scale">
+    <q-card class="runner-dialog">
+
+      <!-- ▸ TITLE -->
+      <q-card-section class="dialog-header">
+        <div class="dialog-title">Create New Runner</div>
+      </q-card-section>
+
+      <q-separator dark />
+
+      <!-- ▸ BODY -->
+      <div class="dialog-body row no-wrap">
+
+        <!-- FORM -->
+        <q-card-section class="runner-form col">
+          <q-form @submit.prevent="submitForm" class="q-gutter-md">
+
+            <q-input
+              v-model="localForm.name"
+              label="Name"
+              outlined dense dark color="accent"
+              @focus="setActive('name')"
+            />
+
+            <q-select
+              v-model="localForm.strategy"
+              label="Strategy"
+              :options="strategies"
+              outlined dense dark color="accent"
+              emit-value map-options
+              menu-content-class="my-select-dropdown"
+              @focus="setActive('strategy')"
+            />
+
+            <q-input
+              v-model.number="localForm.budget"
+              label="Budget"
+              type="number"
+              suffix="$"
+              outlined dense dark color="accent"
+              @focus="setActive('budget')"
+            />
+
+            <q-input
+              v-model="localForm.stock"
+              label="Stock"
+              outlined dense dark color="accent"
+              @focus="setActive('stock')"
+            />
+
+            <q-select
+              v-model="localForm.time_frame"
+              label="Time Frame"
+              :options="timeFrames"
+              outlined dense dark color="accent"
+              emit-value map-options
+              menu-content-class="my-select-dropdown"
+              @focus="setActive('time_frame')"
+            />
+
+            <q-input
+              v-model.number="localForm.stop_loss"
+              label="Risk % (stop loss)"
+              type="number"
+              suffix="%"
+              outlined dense dark color="accent"
+              @focus="setActive('stop_loss')"
+            />
+
+            <q-input
+              v-model.number="localForm.take_profit"
+              label="Take profit at %"
+              type="number"
+              suffix="%"
+              outlined dense dark color="accent"
+              @focus="setActive('take_profit')"
+            />
+
+            <!-- DATE‑RANGE FIELD -->
+            <q-input
+              v-model="timeRangeDisplay"
+              label="Time Range"
+              outlined dense dark color="accent"
+              @focus="setActive('time_range'); $refs.trPopup.show()"
+            >
+              <template #append>
+                <q-icon name="event" class="cursor-pointer" @click.stop="$refs.trPopup.show()" />
+              </template>
+
+              <q-popup-proxy
+                ref="trPopup"
+                transition-show="scale"
+                transition-hide="scale"
+              >
+                <q-date
+                  v-model="localForm.time_range"
+                  range
+                  dark
+                  minimal
+                  @update:model-value="updateTimeRangeDisplay"
+                />
+              </q-popup-proxy>
+            </q-input>
+
+            <q-select
+              v-model="localForm.commission_ratio"
+              label="Commission : price ratio"
+              :options="commissionRatios"
+              outlined dense dark color="accent"
+              emit-value map-options
+              menu-content-class="my-select-dropdown"
+              @focus="setActive('commission_ratio')"
+            />
+
+            <q-select
+              v-model="localForm.exit_strategy"
+              label="Exit Strategy"
+              :options="exitStrategies"
+              outlined dense dark color="accent"
+              emit-value map-options
+              menu-content-class="my-select-dropdown"
+              @focus="setActive('exit_strategy')"
+            />
+
+          </q-form>
+        </q-card-section>
+
+        <!-- DESCRIPTION PANEL -->
+        <q-separator vertical dark />
+        <div class="description-panel col-4">
+          <div class="description-text">
+            {{ fieldDescriptions[activeField] }}
+          </div>
+        </div>
+      </div>
+
+      <!-- ▸ ACTIONS -->
+      <q-card-section class="dialog-actions">
+        <q-btn flat label="Cancel" color="negative" class="action-btn" @click="$emit('close')" />
+        <q-btn label="Create" color="primary" class="action-btn" @click="submitForm" />
+      </q-card-section>
+
+    </q-card>
+  </q-dialog>
+</template>
+
+
+<script>
+export default {
+  name: 'CreateRunnerDialog',
+  props: ['defaultData'],
+  emits: ['close', 'created'],
+  data () {
+    return {
+      isOpen: true,
+      activeField: 'name',
+
+      /* select options ------------------------------------------------ */
+      strategies:      ['Fibonacci', 'Tunnel', 'AI'],
+      timeFrames:      ['5 minutes', '15 minutes', '30 minutes', '1 hour', '4 hours', '1 day'],
+      commissionRatios:['< 1', '< 2', '< 3'],
+      exitStrategies:  ['Expired date', 'Trail'],
+
+      /* human‑readable helper for date range --------------------------- */
+      timeRangeDisplay: '',
+
+      fieldDescriptions: {
+        name:             'Choose a clear, unique identifier for this runner.',
+        strategy:         'Select the trading strategy the runner will execute.',
+        budget:           'Total capital allocated. Whole dollar amounts only.',
+        stock:            'Ticker symbol or asset name you want to trade.',
+        time_frame:       'Chart interval the strategy analyses for signals.',
+        stop_loss:        'Max acceptable loss per trade, in percent of budget.',
+        take_profit:      'Target profit percentage at which to close a trade.',
+        time_range:       'Overall period during which the runner is active.',
+        commission_ratio: 'Transaction cost relative to position size.',
+        exit_strategy:    'Rule that closes positions other than stop / target.'
       },
+
+      /* form model ---------------------------------------------------- */
+      localForm: {
+        name: '',
+        strategy: null,
+        budget: null,
+        stock: '',
+        time_frame: null,
+        stop_loss: null,
+        take_profit: 3,
+        time_range:  null,            // { from:'YYYY/MM/DD', to:'YYYY/MM/DD' }
+        commission_ratio: '1:100',
+        exit_strategy: null,
+        created_at: new Date().toISOString(),
+        ...this.defaultData
+      }
+    }
+  },
+
+  mounted () { this.updateTimeRangeDisplay() },
+
+  methods: {
+    setActive (f) { this.activeField = f },
+
+    updateTimeRangeDisplay () {
+      const r = this.localForm.time_range
+      this.timeRangeDisplay = r && r.from && r.to
+        ? `${r.from} → ${r.to}`
+        : ''
     },
-  };
-  </script>
-  
-  <style scoped>
-  .dialog-card {
-    width: 100%;
-    max-width: 480px;
-    max-height: 90vh;
-    overflow: hidden;
-    background-color: #2b2b3d;
-    border: 1px solid #444;
-    border-radius: 12px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
-    color: #fff;
+
+    submitForm () {
+      const newRunner = {
+        id: Date.now(),
+        ...this.localForm,
+        created_at: new Date().toISOString()
+      }
+      this.$emit('created', newRunner)
+      this.$emit('close')
+    }
   }
-  
-  .form-section {
-    max-height: 65vh;
-    overflow-y: auto;
-    background-color: #1f1f2d;
-    padding-right: 8px;
-  }
-  
-  .form-section::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  .form-section::-webkit-scrollbar-thumb {
-    background-color: #555;
-    border-radius: 6px;
-  }
-  
-  .dialog-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 15px;
-  }
-  
-  .dialog-actions button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-  }
-  
-  .dialog-actions .cancel-btn {
-    background-color: #e53935;
-    color: white;
-  }
-  
-  .dialog-actions button[type="submit"] {
-    background-color: #00d1b2;
-    color: #1e1e2f;
-  }
-  
-  /* Improve input field spacing */
-  .q-input {
-    margin-bottom: 8px;
-  }
-  
-  .q-checkbox {
-    margin-top: 8px;
-  }
-  
-  .q-form {
-    padding-bottom: 10px;
-  }
-  
-  /* Label customizations */
-  .q-input__label {
-    color: #ccc;
-    font-size: 1rem;
-  }
-  
-  .q-checkbox__label {
-    color: #ccc;
-    font-size: 1rem;
-  }
-  </style>
-  
+}
+</script>
+
+<style scoped>
+/* ─── Dialog colours & layout ──────────────────────────────────── */
+.runner-dialog {
+  width: 100%;
+  max-width: 900px;
+  background: #3b3b3b;
+  color: var(--text-light);
+  border-radius: var(--card-radius);
+  border: 1px solid #606060;
+  box-shadow: 0 0 18px rgba(0,0,0,.5);
+}
+
+.dialog-header { padding: 12px 18px; background: #454545; }
+.dialog-title  { font-size: 1.35rem; font-weight: 600; color: #f1f1f1; }
+
+.dialog-body {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-y: hidden;
+  max-height: 70vh;
+}
+
+.runner-form {
+  padding: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.runner-form .q-field {
+  margin-bottom: 10px;
+}
+
+.description-panel {
+  min-width: 300px;
+  padding: 16px;
+  background: #2e2e2e;
+  display: flex; align-items: center;
+}
+.description-text { font-size: .85rem; line-height: 1.4; color: #d0d0d0; }
+
+/* ▸ smaller/denser fields */
+.runner-form .q-field { font-size: .75rem; }
+.runner-form .q-field__control { min-height: 36px; }
+
+/* Buttons */
+.dialog-actions { display: flex; justify-content: flex-end; gap: 10px;
+  padding: 12px 18px 16px; background: #3b3b3b; }
+.action-btn     { font-size: .68rem; padding: 5px 14px; text-transform: none; }
+
+/* Cancel */
+.q-btn[color="negative"] {
+  background: #4c3030; color: #ff7878; border: 1px solid #ff7878;
+}
+.q-btn[color="negative"]:hover { background: #663b3b; color:#fff; }
+
+/* Create */
+.q-btn[color="primary"] {
+  background:#dedede; color:#1c1c1c; border:1px solid #b5b5b5;
+}
+.q-btn[color="primary"]:hover { background:#ffffff; }
+
+.q-separator {
+  margin: 0 !important;
+}
+
+
+</style>

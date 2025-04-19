@@ -23,7 +23,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { AgGridVue }          from 'ag-grid-vue3'
 import { fetchExecutedTrades } from '@/services/dataFetcher'
 import 'ag-grid-community/dist/styles/ag-grid.css'
@@ -58,6 +58,9 @@ function formatTimestamp(ts){ return new Date(ts).toLocaleString() }
 async function loadTrades(){
   trades.value = await fetchExecutedTrades()
   if (trades.value.length) tradesLastUpdate.value = trades.value[0].fill_time
+
+  await nextTick()             
+  gridApi?.sizeColumnsToFit() 
 }
 
 function onGridReady(p){

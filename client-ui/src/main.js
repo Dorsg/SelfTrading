@@ -27,7 +27,10 @@ import {
   QBtn,
   QTabs,  
   QTab,
-  QTable
+  QTable,
+  QSelect,
+  QPopupProxy,
+  QDate
 } from 'quasar'
 
 // Register everything manually
@@ -45,7 +48,10 @@ app.use(Quasar, {
     QBtn,
     QTabs,
     QTab,
-    QTable
+    QTable,
+    QSelect,
+    QPopupProxy,
+    QDate
   },
   plugins: {} // optionally: Dialog, Notify, etc.
 })
