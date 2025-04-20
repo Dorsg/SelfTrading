@@ -348,3 +348,50 @@ body .tiny-dd .q-item.q-item--active:before {
 body .tiny-dd .q-item:hover {
   background: rgba(255, 255, 255, 0.08) !important;
 }
+
+/* ───────────  Action Bar Styles ─────────── */
+.action-bar {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px; /* Reduced gap between buttons */
+  margin-bottom: 16px;
+}
+
+.primary-btn.q-btn {
+  padding: 3px; /* Smaller padding */
+  font-size: 0.75rem !important;  /* Further reduced font size */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 30px; /* Set a minimum width for button */
+  min-height: 30px; /* Set a minimum height for button */
+}
+
+.primary-btn.q-btn .q-icon {
+  font-size: 0.7rem !important;  /* Smaller icons */
+}
+
+.primary-btn.q-btn:hover {
+  transform: scale(1.03) !important;  /* Subtle scale effect on hover */
+  box-shadow: none !important; /* Remove shadow on hover for smaller buttons */
+}
+
+/* ───────────  Tooltip Styles ─────────── */
+.q-btn {
+  position: relative;
+}
+
+.q-btn:hover::after {
+  content: attr(tooltip);
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: white;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}

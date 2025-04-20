@@ -1,17 +1,42 @@
 <template>
   <div class="runners-tab page-wrapper">
-    <div class="header-row">
+    <!-- Action Bar -->
+    <div class="header-row action-bar">
       <q-btn
-        class="primary-btn"
-        label="Create Runner"
         icon="add"
         rounded
         dense
-        size="md"
+        size="xs"
         @click="showCreateForm = true"
+        :tooltip="'Create'"
+      />
+      <q-btn
+        icon="delete"
+        rounded
+        dense
+        size="xs"
+        @click="removeRunner"
+        :tooltip="'Remove'"
+      />
+      <q-btn
+        icon="edit"
+        rounded
+        dense
+        size="xs"
+        @click="modifyRunner"
+        :tooltip="'Modify'"
+      />
+      <q-btn
+        icon="check_circle"
+        rounded
+        dense
+        size="xs"
+        @click="activateRunner"
+        :tooltip="'Activate'"
       />
     </div>
 
+    <!-- Create Form Dialog -->
     <CreateRunnerDialog
       v-if="showCreateForm"
       :defaultData="defaultForm"
@@ -19,6 +44,7 @@
       @created="addRunner"
     />
 
+    <!-- AG Grid Table -->
     <ag-grid-vue
       class="ag-theme-alpine-dark"
       style="width: 100%; height: 500px"
