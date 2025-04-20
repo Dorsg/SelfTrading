@@ -180,20 +180,11 @@ span {
 
 .primary-btn.q-btn {
   /* gradient background */
-  background: linear-gradient(135deg, #00d1b2 0%, #008c8b 100%) !important;
+  background:  #008c8b  !important;
   color: #1e1e2f !important;
   padding: 1px 2px  !important;
-  margin: 3px 0 !important;
-  font-weight: 400 !important;
-  font-size: 0.55rem !important;
-  border-radius: 12px !important;
+  margin: 3px 3px !important;
   text-transform: none !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
-  transition: 
-    background 0.3s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease !important;
 }
 
 /* hover: lift up + brighter gradient */
@@ -203,11 +194,6 @@ span {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* active/click: press in */
-.primary-btn.q-btn:active {
-  transform: translateY(0) scale(0.98) !important;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2) !important;
-}
 
 /* icon bounce on hover */
 .primary-btn.q-btn:hover .q-icon {
@@ -290,4 +276,75 @@ span {
   height: 22px !important;              /* buttons stay petite */
   min-height: 22px !important;
   padding: 2px 6px !important;
+}
+
+*/* ───────────  CUSTOM INPUTS  ─────────── */
+
+.q-field--focused .q-field__control {
+  border-color: #ffffff !important; /* border */
+}
+
+.q-field--focused .q-field__label {
+  color: #ffffff !important; /* label */
+}
+
+.q-field--focused .q-field__control,
+.q-field--focused .q-field__control:before,
+.q-field--focused .q-field__control:after {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 1px #ffffff !important;
+}
+
+
+
+/* ───────────  CUSTOM SELECT  ─────────── */
+/* Smaller dropdown font for q-select options */
+.my-select-dropdown {
+  font-size: 0.75rem !important;  /* ≈12px */
+  padding: 4px 8px;
+}
+
+.my-select-dropdown .q-item {
+  min-height: 28px !important;   /* reduce option height */
+  padding: 4px 8px !important;
+}
+
+
+
+body .tiny-dd * {
+  font-size: 0.9rem !important;   /* ≈ 9‑10 px */
+  line-height: 1.2 !important;
+}
+
+body .tiny-dd .q-item {
+  min-height: 24px !important;    /* slimmer rows */
+  padding: 6px 12px !important;   /* space between rows */
+  margin-bottom: 4px !important;  /* gap between items */
+}
+
+
+
+/* shrink the text that appears inside the field after a value is chosen */
+body .tiny-select .q-field__native,
+body .tiny-select .q-field__native * ,
+body .tiny-select .q-select__single-value,
+body .tiny-select .q-chip__content {   /* multi‑select chips */
+  font-size: 0.9rem !important;        /* ≈ 9‑10 px */
+  line-height: 1.2 !important;
+}
+
+/* optional: keep the field itself tight */
+body .tiny-select .q-field__control {
+  min-height: 30px !important;         /* default dense = 36px */
+}
+
+body .tiny-dd .q-item.q-item--active,
+body .tiny-dd .q-item.q-item--highlighted,
+body .tiny-dd .q-item.q-item--active:before {
+  background: #2a2a2a !important;    /* or your preferred dark shade */
+  color: #ffffff !important;         /* ensure white text on dark bg */
+}
+
+body .tiny-dd .q-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
 }

@@ -26,6 +26,9 @@
             <q-select
               v-model="localForm.strategy"
               label="Strategy"
+              options-dense                  
+              popup-content-class="tiny-dd"  
+              class="tiny-select"  
               :options="strategies"
               outlined dense dark color="accent"
               emit-value map-options
@@ -54,6 +57,8 @@
               label="Time Frame"
               :options="timeFrames"
               outlined dense dark color="accent"
+              popup-content-class="tiny-dd"  
+              class="tiny-select"  
               emit-value map-options
               menu-content-class="my-select-dropdown"
               @focus="setActive('time_frame')"
@@ -107,6 +112,8 @@
               v-model="localForm.commission_ratio"
               label="Commission : price ratio"
               :options="commissionRatios"
+              popup-content-class="tiny-dd"  
+              class="tiny-select"  
               outlined dense dark color="accent"
               emit-value map-options
               menu-content-class="my-select-dropdown"
@@ -118,6 +125,8 @@
               label="Exit Strategy"
               :options="exitStrategies"
               outlined dense dark color="accent"
+              popup-content-class="tiny-dd"  
+              class="tiny-select"  
               emit-value map-options
               menu-content-class="my-select-dropdown"
               @focus="setActive('exit_strategy')"
@@ -128,7 +137,7 @@
 
         <!-- DESCRIPTION PANEL -->
         <q-separator vertical dark />
-        <div class="description-panel col-4">
+        <div class="description-panel">
           <div class="description-text">
             {{ fieldDescriptions[activeField] }}
           </div>
@@ -256,7 +265,7 @@ export default {
 }
 
 .description-panel {
-  min-width: 300px;
+  width: 400px;
   padding: 16px;
   background: #2e2e2e;
   display: flex; align-items: center;
@@ -288,5 +297,39 @@ export default {
   margin: 0 !important;
 }
 
+.q-field--focused .q-field__control {
+  border-color: #ffffff !important; /* border */
+}
+
+.q-field--focused .q-field__label {
+  color: #ffffff !important; /* label */
+}
+
+
+
+/* Smaller dropdown font for q-select options */
+.my-select-dropdown {
+  font-size: 0.75rem !important;  /* ≈12px */
+  padding: 4px 8px;
+}
+
+.my-select-dropdown .q-item {
+  min-height: 28px !important;   /* reduce option height */
+  padding: 4px 8px !important;
+}
+
+body .my-select-dropdown {
+  font-size: 0.75rem !important;
+}
+
+body .my-select-dropdown .q-item {
+  min-height: 28px !important;
+  padding: 4px 10px !important;
+}
+
+body .my-select-dropdown .q-item__label {
+  font-size: 0.75rem !important;
+  line-height: 1.2 !important;
+}
 
 </style>
