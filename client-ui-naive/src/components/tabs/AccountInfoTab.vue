@@ -63,7 +63,6 @@
   
   // Columns for the positions table
   const positionsColumns = [
-    { title: 'Account', key: 'account' },
     { title: 'Symbol', key: 'symbol' },
     { title: 'Quantity', key: 'quantity' },
     { title: 'Average Price', key: 'avg_price', render: (row) => formatCurrency(row.avg_price) },
