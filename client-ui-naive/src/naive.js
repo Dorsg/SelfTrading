@@ -29,7 +29,14 @@ import {
     NTab,
     NRow,
     NCol,
-    NDataTable
+    NDataTable,
+    NDialog,
+    NModal,
+    NMessageProvider,
+    NFormItemGi,
+    NCheckboxGroup,
+    NCheckbox,
+    
   } from 'naive-ui'
   
   export const createNaiveUI = () =>
@@ -64,7 +71,13 @@ import {
         NTab,
         NRow,
         NCol,
-        NDataTable
+        NDataTable,
+        NDialog,
+        NModal,
+        NMessageProvider,
+        NFormItemGi,
+        NCheckboxGroup,
+        NCheckbox
       ]
     })
   

@@ -1,21 +1,23 @@
 <template>
   <n-config-provider :theme="darkTheme">
-    <n-layout>
-      <n-page-header title="SelfTrading" class="header" />
+    <n-message-provider>
+      <n-layout>
+        <n-page-header title="SelfTrading" class="header" />
 
-      <n-layout-content class="content">
-        <n-tabs v-model:value="activeTab" justify-content="space-evenly" type="line">
-          <n-tab name="account" tab="Account Information" />
-          <n-tab name="orders" tab="Open Orders" />
-          <n-tab name="trades" tab="Executed Trades" />
-          <n-tab name="runners" tab="Self Runners" />
-        </n-tabs>
+        <n-layout-content class="content">
+          <n-tabs v-model:value="activeTab" justify-content="space-evenly" type="line">
+            <n-tab name="account" tab="Account Information" />
+            <n-tab name="orders" tab="Open Orders" />
+            <n-tab name="trades" tab="Executed Trades" />
+            <n-tab name="runners" tab="Self Runners" />
+          </n-tabs>
 
-        <n-card class="card">
-          <component :is="tabComponentMap[activeTab]" />
-        </n-card>
-      </n-layout-content>
-    </n-layout>
+          <n-card class="card">
+            <component :is="tabComponentMap[activeTab]" />
+          </n-card>
+        </n-layout-content>
+      </n-layout>
+    </n-message-provider>
   </n-config-provider>
 </template>
 

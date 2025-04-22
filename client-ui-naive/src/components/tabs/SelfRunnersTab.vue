@@ -6,15 +6,19 @@
         Last update on: {{ formatTimestamp(runnersLastUpdate) }}
       </div>
     </div>
-
+    
     <!-- Action Bar -->
     <div class="action-bar">
-      <n-button @click="createRunner" >Create Runner</n-button>
-      <n-button @click="removeRunner" >Remove Runner</n-button>
+      <n-button @click="showCreateForm = true">Create Runner</n-button>
+      <n-button @click="removeRunner">Remove Runner</n-button>
       <n-button @click="removeAllRunners">Remove All</n-button>
       <n-button @click="activateRunner">Activate Runner</n-button>
     </div>
 
+    <!-- Create Runner Form (floating dialog) -->
+    <n-modal v-model:show="showCreateForm" preset="card" title="Create Runner" style="width: 600px">
+      <CreateRunnerForm @create="createRunner" @cancel="cancelCreateForm" />
+    </n-modal>
     <!-- Runners Grid -->
     <n-card class="card" :style="{ height: '500px', width: '100%' }">
       <ag-grid-vue
@@ -41,6 +45,11 @@ import { AgGridVue } from 'ag-grid-vue3'
 // import { fetchRunners } from '@/services/dataFetcher'
 import 'ag-grid-community/dist/styles/ag-grid.css'
 import 'ag-grid-community/dist/styles/ag-theme-alpine-dark.css'
+
+import CreateRunnerForm from '@/components/runners_actions/CreateRunnerForm.vue'
+
+const showCreateForm = ref(false)
+
 
 // Define mock runners data for now
 const runners = ref([
@@ -117,9 +126,23 @@ onUnmounted(() => {
 onMounted(loadRunners)
 
 // Action bar methods
-function createRunner() {
-  console.log("Create Runner clicked")
-  // Implement the logic for creating a runner
+function createRunner(newRunnerData) {
+  console.log("Received runner data:", newRunnerData)
+
+  // Add the new runner to the list (mock implementation for now)
+  const newRunner = {
+    id: runners.value.length + 1,
+    ...newRunnerData,
+    created_at: new Date().toISOString()
+  }
+
+  runners.value.push(newRunner)
+  showCreateForm.value = false
+  runnersLastUpdate.value = newRunner.created_at
+}
+
+function cancelCreateForm() {
+  showCreateForm.value = false
 }
 
 function removeRunner() {
