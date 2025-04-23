@@ -36,6 +36,8 @@ import {
     NFormItemGi,
     NCheckboxGroup,
     NCheckbox,
+    NButtonGroup,
+     
     
   } from 'naive-ui'
   
@@ -77,7 +79,9 @@ import {
         NMessageProvider,
         NFormItemGi,
         NCheckboxGroup,
-        NCheckbox
+        NCheckbox,
+        NButtonGroup,
+         
       ]
     })
   

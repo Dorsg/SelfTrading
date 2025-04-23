@@ -6,12 +6,32 @@
 
     <!-- Action Bar with Last Update -->
     <div class="action-bar">
-      <div class="buttons">
-        <n-button @click="showCreateForm = true">Create Runner</n-button>
-        <n-button @click="removeRunner">Remove Runner</n-button>
-        <n-button @click="InactiveRunner">Inactive Runner</n-button>
-        <n-button @click="activateRunner">Activate Runner</n-button>
-      </div>
+      <n-button-group class="button-group">
+        <n-button @click="showCreateForm = true">
+          <template #icon>
+            <n-icon><AddOutline /></n-icon>
+          </template>
+          Create
+        </n-button>
+        <n-button @click="removeRunner">
+          <template #icon>
+            <n-icon><TrashOutline /></n-icon>
+          </template>
+          Remove
+        </n-button>
+        <n-button @click="InactiveRunner">
+          <template #icon>
+            <n-icon><PauseOutline /></n-icon>
+          </template>
+          Inactivate
+        </n-button>
+        <n-button @click="activateRunner">
+          <template #icon>
+            <n-icon><PlayOutline /></n-icon>
+          </template>
+          Reactivate
+        </n-button>
+      </n-button-group>
       <div v-if="runnersLastUpdate" class="last-updated">
         Last update on: {{ formatTimestamp(runnersLastUpdate) }}
       </div>
@@ -42,6 +62,7 @@
 </template>
 
 <script setup>
+import { AddOutline, TrashOutline, PauseOutline, PlayOutline } from '@vicons/ionicons5'
 import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { AgGridVue } from 'ag-grid-vue3'
 import 'ag-grid-community/dist/styles/ag-grid.css'
@@ -70,6 +91,9 @@ const columnDefs = [
     headerCheckboxSelection: true,
     width: 10,
   },
+  { headerName: 'ID', field: 'id' },
+  { headerName: 'Name', field: 'name' },
+  { headerName: 'Strategy', field: 'strategy' },
   {
     headerName: 'Activation',
     field: 'activation',
@@ -80,9 +104,6 @@ const columnDefs = [
     },
     width: 120
   },
-  { headerName: 'ID', field: 'id' },
-  { headerName: 'Name', field: 'name' },
-  { headerName: 'Strategy', field: 'strategy' },
   { headerName: 'Budget', field: 'budget' },
   { headerName: 'Stock', field: 'stock' },
   { headerName: 'Time Frame (min)', field: 'time_frame' },
@@ -169,12 +190,25 @@ function InactiveRunner() {
   gridApi.setRowData([...runners.value])
   saveRunners()
 }
+function onGridReady(params) {
+  gridApi = params.api
+  const columnApi = params.columnApi
 
-function onGridReady(p) {
-  gridApi = p.api
-  gridApi.sizeColumnsToFit()
   resizeHandler = () => gridApi?.sizeColumnsToFit()
   window.addEventListener('resize', resizeHandler)
+
+  nextTick(() => {
+    autoSizeAllColumns(columnApi)
+  })
+}
+
+
+
+function autoSizeAllColumns(columnApi) {
+  if (!columnApi) return
+
+  const allColumnIds = columnApi.getColumns().map(col => col.getColId())
+  columnApi.autoSizeColumns(allColumnIds, false)
 }
 
 function saveRunners() {
@@ -209,7 +243,12 @@ onUnmounted(() => {
 })
 
 onMounted(() => {
-  nextTick(() => gridApi?.sizeColumnsToFit())
+  nextTick(() => {
+    if (gridApi) gridApi.setRowData(runners.value)
+    if (runners.value.length) {
+      runnersLastUpdate.value = runners.value[0].created_at
+    }
+  })
 })
 </script>
 
@@ -253,5 +292,10 @@ onMounted(() => {
 .ag-theme-alpine-dark {
   width: 100%;
   height: 100%;
+}
+
+.ag-header-cell-label {
+  white-space: normal !important;
+  line-height: 1.2 !important;
 }
 </style>

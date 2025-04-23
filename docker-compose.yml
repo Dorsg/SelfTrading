@@ -29,11 +29,11 @@ services:
   client-ui:
     build:
       context: .
-      dockerfile: Dockerfile.client-ui
+      dockerfile: Dockerfile.client-ui-naive
     ports:
-      - "8080:8080"
+      - "8080:80"
     depends_on:
-      - api_gateway    
+      - api_gateway 
 
   scheduler:
     build:

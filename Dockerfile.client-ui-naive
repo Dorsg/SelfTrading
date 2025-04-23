@@ -1,0 +1,27 @@
+# Stage 1: Build the Vite app
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+COPY client-ui-naive/package*.json ./
+RUN npm install
+
+COPY client-ui-naive .
+
+RUN npm run build
+
+# Stage 2: Serve with Nginx
+FROM nginx:stable-alpine
+
+# Remove default nginx static files
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy built assets from the builder
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Optional: custom nginx config (only if needed)
+# COPY nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
