@@ -3,26 +3,36 @@ import math
 import random
 from dotenv import load_dotenv
 import os
-from ib_insync import IB, LimitOrder, MarketOrder, Stock, StopOrder
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
+from ib_insync import IB, LimitOrder, Stock, StopOrder
 
 from database.db_manager import DBManager
 from .market_data_manager import MarketDataManager
 
 
-load_dotenv()
+load_dotenv(dotenv_path="/app/.env", override=True)
 logger = logging.getLogger(__name__)
 
-IB_GATEWAY_HOST = os.getenv("IB_GATEWAY_HOST")
+# Detect Docker mode and set correct IB host
+DOCKER_MODE = os.getenv("DOCKER_MODE", "false").lower() == "true"
+IB_GATEWAY_HOST = (
+    os.getenv("IB_GATEWAY_HOST_DOCKER") if DOCKER_MODE else os.getenv("IB_GATEWAY_HOST")
+)
+
 IB_GATEWAY_PORT = int(os.getenv("IB_GATEWAY_PORT", 4002))
-IB_CLIENT_ID = int(os.getenv("IB_CLIENT_ID"))
+IB_CLIENT_ID = int(os.getenv("IB_CLIENT_ID", 15))
 
 class IBManager:
     def __init__(self, client_id: int = None):
         self.ib = IB()
-        client_id = client_id or int(os.getenv("IB_CLIENT_ID", 15))
+        client_id = client_id or IB_CLIENT_ID
         try:
             self.ib.connect(IB_GATEWAY_HOST, IB_GATEWAY_PORT, clientId=client_id)
-            logger.info("Connected to IB Gateway (host=%s, port=%d, client_id=%d)", IB_GATEWAY_HOST, IB_GATEWAY_PORT, client_id)
+            logger.info(
+                "Connected to IB Gateway (host=%s, port=%d, client_id=%d)",
+                IB_GATEWAY_HOST, IB_GATEWAY_PORT, client_id
+            )
         except Exception:
             logger.exception("Failed to connect to IB Gateway")
             raise

@@ -4,21 +4,30 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-# Load environment variables from .env
+# Load environment variables
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Detect if running in Docker
+DOCKER_MODE = os.getenv("DOCKER_MODE", "false").lower() == "true"
+
+# Pick the correct DB URL
+DATABASE_URL = (
+    os.getenv("DATABASE_URL_DOCKER")
+    if DOCKER_MODE
+    else os.getenv("DATABASE_URL")
+)
+
 if not DATABASE_URL:
-    # You can raise an error or log a warning, but you definitely want to handle this
-    logger.error("DATABASE_URL environment variable is not set. Make sure .env is loaded or Docker env is passed.")
-    raise ValueError("DATABASE_URL is not set.")
+    logger.error("DATABASE_URL is not set.")
+    raise ValueError("DATABASE_URL is required.")
 
 try:
     engine = create_engine(DATABASE_URL, echo=True)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    logger.info("Successfully connected to the database.")
+    logger.info("Connected to database successfully.")
 except Exception:
     logger.exception("Failed to connect to the database.")
     raise
