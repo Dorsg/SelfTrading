@@ -10,10 +10,49 @@
             justify-content="space-evenly"
             type="line"
           >
-            <n-tab name="account" tab="Account Information" />
-            <n-tab name="orders" tab="Open Orders" />
-            <n-tab name="trades" tab="Executed Trades" />
-            <n-tab name="runners" tab="Self Runners" />
+            <n-tab-pane name="account">
+              <template #tab>
+                <n-icon
+                  :component="WalletOutline"
+                  size="18"
+                  style="margin-right: 9px; vertical-align: -3px"
+                />
+                Account Information
+              </template>
+            </n-tab-pane>
+
+            <n-tab-pane name="orders">
+              <template #tab>
+                <n-icon
+                  :component="DocumentTextOutline"
+                  size="18"
+                  style="margin-right: 9px; vertical-align: -3px"
+                />
+                Open Orders
+              </template>
+            </n-tab-pane>
+
+            <n-tab-pane name="trades">
+              <template #tab>
+                <n-icon
+                  :component="StatsChartOutline"
+                  size="18"
+                  style="margin-right: 9px; vertical-align: -3px"
+                />
+                Executed Trades
+              </template>
+            </n-tab-pane>
+
+            <n-tab-pane name="runners">
+              <template #tab>
+                <n-icon
+                  :component="RocketOutline"
+                  size="18"
+                  style="margin-right: 9px; vertical-align: -3px"
+                />
+                Self Runners
+              </template>
+            </n-tab-pane>
           </n-tabs>
 
           <n-card class="card">
@@ -28,6 +67,12 @@
 <script setup>
 import { ref } from "vue";
 import { darkTheme } from "naive-ui";
+import {
+  WalletOutline,
+  DocumentTextOutline,
+  StatsChartOutline,
+  RocketOutline,
+} from "@vicons/ionicons5";
 
 import AccountInfoTab from "./components/tabs/AccountInfoTab.vue";
 import OpenOrdersTab from "./components/tabs/OpenOrdersTab.vue";

@@ -47,6 +47,7 @@ export async function fetchExecutedTrades() {
 
 export async function createRunnerAPI(runnerData) {
   try {
+    console.log("Sending runnerData:", runnerData);
     const response = await axios.post(`${BASE_URL}/runners`, runnerData);
     return response.data;
   } catch (error) {

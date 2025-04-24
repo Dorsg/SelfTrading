@@ -37,6 +37,7 @@ import {
     NCheckboxGroup,
     NCheckbox,
     NButtonGroup,
+    NTabPane     
     
   } from 'naive-ui'
   
@@ -80,6 +81,7 @@ import {
         NCheckboxGroup,
         NCheckbox,
         NButtonGroup,
+        NTabPane     
       ]
     })
   
