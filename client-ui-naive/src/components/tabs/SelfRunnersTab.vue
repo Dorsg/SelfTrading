@@ -38,7 +38,12 @@
     </div>
 
     <!-- Create Runner Form (floating dialog) -->
-    <n-modal v-model:show="showCreateForm" preset="card" title="Create Runner" style="width: 600px">
+    <n-modal
+      v-model:show="showCreateForm"
+      preset="card"
+      title="Create Runner"
+      style="width: 600px"
+    >
       <CreateRunnerForm @create="createRunner" @cancel="cancelCreateForm" />
     </n-modal>
 
@@ -62,19 +67,34 @@
 </template>
 
 <script setup>
-import { AddOutline, TrashOutline, PauseOutline, PlayOutline } from '@vicons/ionicons5'
-import { ref, nextTick, onMounted, onUnmounted } from 'vue'
-import { AgGridVue } from 'ag-grid-vue3'
-import 'ag-grid-community/dist/styles/ag-grid.css'
-import 'ag-grid-community/dist/styles/ag-theme-alpine-dark.css'
+import {
+  AddOutline,
+  TrashOutline,
+  PauseOutline,
+  PlayOutline,
+} from "@vicons/ionicons5";
+import { useMessage } from 'naive-ui';
+import { ref, nextTick, onMounted, onUnmounted } from "vue";
+import { AgGridVue } from "ag-grid-vue3";
+import "ag-grid-community/dist/styles/ag-grid.css";
+import "ag-grid-community/dist/styles/ag-theme-alpine-dark.css";
 
-import CreateRunnerForm from '@/components/runners_actions/CreateRunnerForm.vue'
+import CreateRunnerForm from "@/components/runners_actions/CreateRunnerForm.vue";
 
-const showCreateForm = ref(false)
-const runners = ref(JSON.parse(localStorage.getItem('runners') || '[]'))
-const runnersLastUpdate = ref(null)
+// 👇 Import API methods
+import {
+  createRunnerAPI,
+  deleteRunnersAPI,
+  activateRunnersAPI,
+  deactivateRunnersAPI,
+} from "@/services/dataManager";
 
-let gridApi, resizeHandler
+const showCreateForm = ref(false);
+const runners = ref(JSON.parse(localStorage.getItem("runners") || "[]"));
+const runnersLastUpdate = ref(null);
+const message = useMessage();
+
+let gridApi, resizeHandler;
 
 const defaultColDef = {
   flex: 1,
@@ -82,174 +102,189 @@ const defaultColDef = {
   resizable: true,
   sortable: true,
   filter: true,
-}
+};
 
 const columnDefs = [
   {
-    headerName: '',
+    headerName: "",
     checkboxSelection: true,
     headerCheckboxSelection: true,
     width: 10,
   },
-  { headerName: 'ID', field: 'id' },
-  { headerName: 'Name', field: 'name' },
-  { headerName: 'Strategy', field: 'strategy' },
+  { headerName: "ID", field: "id" },
+  { headerName: "Name", field: "name" },
+  { headerName: "Strategy", field: "strategy" },
   {
-    headerName: 'Activation',
-    field: 'activation',
+    headerName: "Activation",
+    field: "activation",
     cellRenderer: (params) => {
-      return params.value === 'active'
-        ? '🟢 Active'
-        : '🔴 Inactive'
+      return params.value === "active" ? "🟢 Active" : "🔴 Inactive";
     },
-    width: 120
+    width: 120,
   },
-  { headerName: 'Budget', field: 'budget' },
-  { headerName: 'Stock', field: 'stock' },
-  { headerName: 'Time Frame (min)', field: 'time_frame' },
-  { headerName: 'Risk % (Stop Loss)', field: 'stop_loss' },
-  { headerName: 'Take Profit %', field: 'take_profit' },
-  { headerName: 'Start Date', field: 'time_range_from' },
-  { headerName: 'End Date', field: 'time_range_to' },
-  { headerName: 'Commission Ratio', field: 'commission_ratio' },
-  { headerName: 'Exit Strategy', field: 'exit_strategy' },
-  { headerName: 'Created At', field: 'created_at' }
-]
+  { headerName: "Budget", field: "budget" },
+  { headerName: "Stock", field: "stock" },
+  { headerName: "Time Frame (min)", field: "time_frame" },
+  { headerName: "Risk % (Stop Loss)", field: "stop_loss" },
+  { headerName: "Take Profit %", field: "take_profit" },
+  { headerName: "Start Date", field: "time_range_from" },
+  { headerName: "End Date", field: "time_range_to" },
+  { headerName: "Commission Ratio", field: "commission_ratio" },
+  { headerName: "Exit Strategy", field: "exit_strategy" },
+  { headerName: "Created At", field: "created_at" },
+];
 
 const statusBar = {
   statusPanels: [
-    { statusPanel: 'agTotalRowCountComponent', align: 'left' },
-    { statusPanel: 'agFilteredRowCountComponent', align: 'left' },
-    { statusPanel: 'agPaginationComponent', align: 'right' }
-  ]
-}
+    { statusPanel: "agTotalRowCountComponent", align: "left" },
+    { statusPanel: "agFilteredRowCountComponent", align: "left" },
+    { statusPanel: "agPaginationComponent", align: "right" },
+  ],
+};
 
 function formatTimestamp(ts) {
-  return new Date(ts).toLocaleString()
+  return new Date(ts).toLocaleString();
 }
 
-function createRunner(newRunnerData) {
-  const [from, to] = newRunnerData.timeRange || [null, null]
+async function createRunner(newRunnerData) {
+  const [from, to] = newRunnerData.timeRange || [null, null];
 
   const newRunner = {
     id: runners.value.length + 1,
     name: newRunnerData.name,
     strategy: newRunnerData.strategy,
     budget: newRunnerData.budget,
-    stock: newRunnerData.stock,
+    stock: newRunnerData.stock.toUpperCase(),
     time_frame: newRunnerData.timeFrame,
     stop_loss: newRunnerData.stopLoss,
     take_profit: newRunnerData.takeProfit,
-    time_range_from: new Date(from).toLocaleString(),
-    time_range_to: new Date(to).toLocaleString(),
+    time_range_from: new Date(newRunnerData.startTime).toLocaleString(),
+    time_range_to:
+      newRunnerData.exitStrategy.includes("expired date") &&
+      newRunnerData.endTime
+        ? new Date(newRunnerData.endTime).toLocaleString()
+        : "Until strategy triggers",
     commission_ratio: newRunnerData.commissionRatio,
-    exit_strategy: newRunnerData.exitStrategy.join(', '),
+    exit_strategy: newRunnerData.exitStrategy.join(", "),
     created_at: new Date().toLocaleString(),
-    activation: 'active'
+    activation: "active",
+  };
+
+  const savedRunner = await createRunnerAPI(newRunner);
+  if (savedRunner) {
+    runners.value.push(savedRunner);
+    saveRunners();
+    if (gridApi) gridApi.setRowData(runners.value);
+    showCreateForm.value = false;
+    runnersLastUpdate.value = savedRunner.created_at;
   }
-
-  runners.value.push(newRunner)
-  saveRunners()
-
-  // 🔥 Force AG Grid to refresh the view
-  if (gridApi) {
-    gridApi.setRowData(runners.value)
-  }
-
-  showCreateForm.value = false
-  runnersLastUpdate.value = newRunner.created_at
 }
 
 function cancelCreateForm() {
-  showCreateForm.value = false
+  showCreateForm.value = false;
 }
 
+async function activateRunner() {
+  const selectedNodes = gridApi.getSelectedNodes();
+  if (!selectedNodes.length) {
+    message.warning("No runner selected for activation.");
+    return;
+  }
 
-function activateRunner() {
-  const selectedNodes = gridApi.getSelectedNodes()
-  if (selectedNodes.length === 0) return
+  const ids = selectedNodes.map((node) => node.data.id);
+  const result = await activateRunnersAPI(ids);
 
-  selectedNodes.forEach(node => {
-    const runner = runners.value.find(r => r.id === node.data.id)
-    if (runner) runner.activation = 'active'
-  })
+  if (result) {
+    selectedNodes.forEach((node) => {
+      const runner = runners.value.find((r) => r.id === node.data.id);
+      if (runner) runner.activation = "active";
+    });
 
-  gridApi.setRowData([...runners.value])
-  saveRunners()
+    gridApi.setRowData([...runners.value]);
+    saveRunners();
+  }
 }
 
-function InactiveRunner() {
-  const selectedNodes = gridApi.getSelectedNodes()
-  if (selectedNodes.length === 0) return
+async function InactiveRunner() {
+  const selectedNodes = gridApi.getSelectedNodes();
+  if (!selectedNodes.length) {
+    message.warning("No runner selected for inactivation.");
+    return;
+  }
 
-  selectedNodes.forEach(node => {
-    const runner = runners.value.find(r => r.id === node.data.id)
-    if (runner) runner.activation = 'inactive'
-  })
+  const ids = selectedNodes.map((node) => node.data.id);
+  const result = await deactivateRunnersAPI(ids);
 
-  gridApi.setRowData([...runners.value])
-  saveRunners()
+  if (result) {
+    selectedNodes.forEach((node) => {
+      const runner = runners.value.find((r) => r.id === node.data.id);
+      if (runner) runner.activation = "inactive";
+    });
+
+    gridApi.setRowData([...runners.value]);
+    saveRunners();
+  }
 }
+
+async function removeRunner() {
+  if (!gridApi) return;
+
+  const selectedNodes = gridApi.getSelectedNodes();
+  const selectedIds = selectedNodes.map((node) => node.data.id);
+
+  if (!selectedIds.length) {
+    message.warning("No runner selected for deletion.");
+    return;
+  }
+
+  const result = await deleteRunnersAPI(selectedIds);
+
+  if (result) {
+    runners.value = runners.value.filter((r) => !selectedIds.includes(r.id));
+    runnersLastUpdate.value = runners.value.length
+      ? runners.value[0].created_at
+      : null;
+    gridApi.setRowData(runners.value);
+    saveRunners();
+  }
+}
+
 function onGridReady(params) {
-  gridApi = params.api
-  const columnApi = params.columnApi
+  gridApi = params.api;
+  const columnApi = params.columnApi;
 
-  resizeHandler = () => gridApi?.sizeColumnsToFit()
-  window.addEventListener('resize', resizeHandler)
+  resizeHandler = () => gridApi?.sizeColumnsToFit();
+  window.addEventListener("resize", resizeHandler);
 
   nextTick(() => {
-    autoSizeAllColumns(columnApi)
-  })
+    autoSizeAllColumns(columnApi);
+  });
 }
 
-
-
 function autoSizeAllColumns(columnApi) {
-  if (!columnApi) return
+  if (!columnApi) return;
 
-  const allColumnIds = columnApi.getColumns().map(col => col.getColId())
-  columnApi.autoSizeColumns(allColumnIds, false)
+  const allColumnIds = columnApi.getColumns().map((col) => col.getColId());
+  columnApi.autoSizeColumns(allColumnIds, false);
 }
 
 function saveRunners() {
-  localStorage.setItem('runners', JSON.stringify(runners.value))
-}
-
-function removeRunner() {
-  if (!gridApi) return
-
-  const selectedNodes = gridApi.getSelectedNodes()
-  const selectedIds = selectedNodes.map(node => node.data.id)
-
-  if (selectedIds.length === 0) {
-    console.warn("No rows selected for deletion")
-    return
-  }
-
-  // Remove selected rows from the runners array
-  runners.value = runners.value.filter(runner => !selectedIds.includes(runner.id))
-
-  // Optionally update last update timestamp
-  runnersLastUpdate.value = runners.value.length ? runners.value[0].created_at : null
-
-  // Refresh the grid (optional, but good for syncing selection UI)
-  gridApi.setRowData(runners.value)
-  saveRunners()
+  localStorage.setItem("runners", JSON.stringify(runners.value));
 }
 
 onUnmounted(() => {
-  window.removeEventListener('resize', resizeHandler)
-  gridApi = null
-})
+  window.removeEventListener("resize", resizeHandler);
+  gridApi = null;
+});
 
 onMounted(() => {
   nextTick(() => {
-    if (gridApi) gridApi.setRowData(runners.value)
+    if (gridApi) gridApi.setRowData(runners.value);
     if (runners.value.length) {
-      runnersLastUpdate.value = runners.value[0].created_at
+      runnersLastUpdate.value = runners.value[0].created_at;
     }
-  })
-})
+  });
+});
 </script>
 
 <style scoped>

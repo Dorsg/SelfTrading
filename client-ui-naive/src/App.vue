@@ -5,7 +5,11 @@
         <n-page-header title="SelfTrading" class="header" />
 
         <n-layout-content class="content">
-          <n-tabs v-model:value="activeTab" justify-content="space-evenly" type="line">
+          <n-tabs
+            v-model:value="activeTab"
+            justify-content="space-evenly"
+            type="line"
+          >
             <n-tab name="account" tab="Account Information" />
             <n-tab name="orders" tab="Open Orders" />
             <n-tab name="trades" tab="Executed Trades" />
@@ -22,22 +26,22 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { darkTheme } from 'naive-ui'
+import { ref } from "vue";
+import { darkTheme } from "naive-ui";
 
-import AccountInfoTab from './components/tabs/AccountInfoTab.vue'
-import OpenOrdersTab from './components/tabs/OpenOrdersTab.vue'
-import ExecutedTradesTab from './components/tabs/ExecutedTradesTab.vue'
-import SelfRunnersTab from './components/tabs/SelfRunnersTab.vue'
+import AccountInfoTab from "./components/tabs/AccountInfoTab.vue";
+import OpenOrdersTab from "./components/tabs/OpenOrdersTab.vue";
+import ExecutedTradesTab from "./components/tabs/ExecutedTradesTab.vue";
+import SelfRunnersTab from "./components/tabs/SelfRunnersTab.vue";
 
-const activeTab = ref('account')
+const activeTab = ref("account");
 
 const tabComponentMap = {
   account: AccountInfoTab,
   orders: OpenOrdersTab,
   trades: ExecutedTradesTab,
-  runners: SelfRunnersTab
-}
+  runners: SelfRunnersTab,
+};
 </script>
 
 <style>
