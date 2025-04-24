@@ -1,5 +1,6 @@
 import logging
 from datetime import date, datetime
+from sqlite3 import IntegrityError
 from typing import List
 
 from sqlalchemy import func
@@ -99,12 +100,29 @@ class DBManager:
     def get_open_positions(self):
         return self.db.query(OpenPosition).all()
 
+    # ───────────── helpers ─────────────
+    def get_runner_by_name(self, name: str):
+        return self.db.query(Runner).filter(Runner.name == name).first()
+    
     # ───────────────────────────── runners ────────────────────────────
     def create_runner(self, data: dict):
+        # pre-check – nicer error than raw 500
+        if self.get_runner_by_name(data["name"]):
+            raise ValueError("Runner name already exists")
+
         runner = Runner(**data)
         self.db.add(runner)
-        success = self._commit("Create runner")
-        return runner if success else None
+        try:
+            self.db.commit()
+            logger.info("Create runner – OK")
+            return runner
+        except IntegrityError:
+            self.db.rollback()
+            raise ValueError("Runner name already exists")
+        except Exception:
+            self.db.rollback()
+            logger.exception("Create runner – FAILED")
+            raise
 
     def delete_runners(self, ids: List[int]) -> int:
         rows = (

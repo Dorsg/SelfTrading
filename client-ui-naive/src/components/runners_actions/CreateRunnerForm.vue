@@ -104,7 +104,8 @@
 <script setup>
 import { ref, watch } from "vue";
 import { useMessage } from "naive-ui";
-
+import { isRunnerNameAvailable } from  "@/services/dataManager";
+import { debounce } from "lodash-es"; 
 const emit = defineEmits(["create", "cancel"]);
 
 const formRef = ref(null);
@@ -139,8 +140,24 @@ const timeFrameOptions = [
   { label: "Day", value: 1440 },
 ];
 
+
 const rules = {
-  name: { required: true, message: "Enter name", trigger: ["input", "blur"] },
+  name: [
+    {
+      required: true,
+      message: "Enter name",
+      trigger: ["input", "blur"]
+    },
+    {
+      // async uniqueness check
+      async validator(_rule, value) {
+        if (!value) return;               // already handled by required rule
+        const available = await isRunnerNameAvailable(value);
+        if (!available) throw new Error("Name already exists");
+      },
+      trigger: "blur"                    // one server call when you leave the field
+    }
+  ],
   strategy: { required: true, message: "Select a strategy", trigger: "change" },
   budget: {
     type: "number",

@@ -41,7 +41,7 @@ class Runner(Base):
     __tablename__ = "runners"
 
     id               = Column(Integer, primary_key=True, index=True)
-    name             = Column(String,  nullable=False)
+    name             = Column(String,  nullable=False, unique=True, index=True) 
     strategy         = Column(String,  nullable=False)
     budget           = Column(Float,   nullable=False)
     stock            = Column(String,  nullable=False)

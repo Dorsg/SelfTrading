@@ -45,6 +45,18 @@ export async function fetchExecutedTrades() {
 
 // Runner-related APIs
 
+export async function isRunnerNameAvailable(name) {
+  try {
+    const { data } = await axios.get(`${BASE_URL}/runners/check-name`, {
+      params: { name }
+    });
+    return !data.exists;       
+  } catch (e) {
+    console.error("Name-check failed", e);
+    return false;                
+  }
+}
+
 export async function createRunnerAPI(runnerData) {
   try {
     console.log("Sending runnerData:", runnerData);
