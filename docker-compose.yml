@@ -1,4 +1,33 @@
 services:
+
+  ib-gateway:
+    image: ghcr.io/gnzsnz/ib-gateway:stable
+    container_name: ib-gateway
+    restart: always
+    ports:
+      - "127.0.0.1:4002:4004"           # paper API
+      - "127.0.0.1:5900:5900"                        # ← NEW  (VNC)
+    environment:
+      TWS_USERID: dosaba823
+      TWS_PASSWORD: AVIVA$142
+      TRADING_MODE: paper
+      READ_ONLY_API: "no"
+      TWS_ACCEPT_INCOMING: accept
+      TIME_ZONE: "Asia/Jerusalem"
+
+      # ─── kill the pop-ups ─────────────────────────────
+      BYPASS_WARNING: yes
+      BypassOrderPrecautions: yes
+      BypassPriceBasedVolatilityRiskWarning: yes
+      BypassNoOverfillProtectionPrecaution: yes
+      BypassRedirectOrderWarning: yes
+      AllowBlindTrading: yes
+      SAVE_TWS_SETTINGS: "08:00"        # optional auto-save
+      VNC_SERVER_PASSWORD: trader123 
+    volumes:
+      - ib_settings:/home/ibgateway/tws_settings
+
+
   db:
     image: postgres:15
     container_name: trading-db
@@ -43,8 +72,13 @@ services:
       - .:/app
     command: python runner_scheduler/main.py
     depends_on:
-      - db
-      - db-init
+      ib-gateway:
+        condition: service_started
+      db:
+        condition: service_started
+      db-init:
+        condition: service_completed_successfully
+    restart: always
     env_file:
       - .env
 
@@ -60,3 +94,4 @@ services:
 
 volumes:
   pg_data:
+  ib_settings:

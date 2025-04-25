@@ -1,41 +1,67 @@
-import logging
+import time, socket, logging
 import math
 import random
 from dotenv import load_dotenv
 import os
 import sys
+
 sys.stdout.reconfigure(encoding='utf-8')
 from ib_insync import IB, LimitOrder, Stock, StopOrder
 
 from database.db_manager import DBManager
 from .market_data_manager import MarketDataManager
 
-
+logger = logging.getLogger(__name__)  
 load_dotenv(dotenv_path="/app/.env", override=True)
-logger = logging.getLogger(__name__)
 
-# Detect Docker mode and set correct IB host
 DOCKER_MODE = os.getenv("DOCKER_MODE", "false").lower() == "true"
+
 IB_GATEWAY_HOST = (
     os.getenv("IB_GATEWAY_HOST_DOCKER") if DOCKER_MODE else os.getenv("IB_GATEWAY_HOST")
 )
 
-IB_GATEWAY_PORT = int(os.getenv("IB_GATEWAY_PORT", 4002))
+if DOCKER_MODE:
+    IB_GATEWAY_PORT = int(os.getenv("IB_GATEWAY_PORT", 4004))
+else:
+    IB_GATEWAY_PORT = int(os.getenv("IB_GATEWAY_PORT_DESKTOP", 4002))
+
 IB_CLIENT_ID = int(os.getenv("IB_CLIENT_ID", 15))
 
+MAX_TRIES   = 30
+RETRY_DELAY = 2           # seconds
+TIMEOUT     = 6           # seconds for apiStart 
+
 class IBManager:
-    def __init__(self, client_id: int = None):
+    def __init__(self, client_id: int | None = None):
         self.ib = IB()
-        client_id = client_id or IB_CLIENT_ID
-        try:
-            self.ib.connect(IB_GATEWAY_HOST, IB_GATEWAY_PORT, clientId=client_id)
-            logger.info(
-                "Connected to IB Gateway (host=%s, port=%d, client_id=%d)",
-                IB_GATEWAY_HOST, IB_GATEWAY_PORT, client_id
-            )
-        except Exception:
-            logger.exception("Failed to connect to IB Gateway")
-            raise
+        cid = client_id or IB_CLIENT_ID
+
+        for attempt in range(1, MAX_TRIES + 1):
+            try:
+                # wait TIMEOUT seconds for APIStart
+                self.ib.connect(
+                    IB_GATEWAY_HOST,
+                    IB_GATEWAY_PORT,
+                    clientId=cid,
+                    timeout=TIMEOUT,
+                )
+                logger.info(
+                    "Connected to IB Gateway (%s:%s, cid=%s)",
+                    IB_GATEWAY_HOST,
+                    IB_GATEWAY_PORT,
+                    cid,
+                )
+                break
+            except (TimeoutError, socket.error):
+                logger.warning(
+                    "IB Gateway not ready yet (attempt %s/%s)...",
+                    attempt,
+                    MAX_TRIES,
+                )
+                time.sleep(RETRY_DELAY)
+        else:
+            logger.error("Unable to connect after %s attempts", MAX_TRIES)
+            raise RuntimeError("IB Gateway connection failed")
 
     def get_account_information(self, accountId=None):
         """
