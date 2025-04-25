@@ -41,6 +41,7 @@ class Runner(Base):
     __tablename__ = "runners"
 
     id               = Column(Integer, primary_key=True, index=True)
+    user_id          = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     name             = Column(String,  nullable=False, unique=True, index=True) 
     strategy         = Column(String,  nullable=False)
     budget           = Column(Float,   nullable=False)
@@ -136,3 +137,21 @@ class ExecutedTrade(Base):
     price      = Column(Float)
     fill_time  = Column(DateTime)   # tz-aware UTC
     account    = Column(String)
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, nullable=False, index=True)
+    username = Column(String, unique=True, nullable=False, index=True)
+    hashed_password = Column(String, nullable=False)
+
+    ib_account_id = Column(String, nullable=True)
+    ib_username   = Column(String, nullable=True)
+    ib_password   = Column(String, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Optional: Relationship to link user to their runners
+    runners = relationship("Runner", backref="user", cascade="all, delete-orphan")
