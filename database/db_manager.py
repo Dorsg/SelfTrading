@@ -100,10 +100,7 @@ class DBManager:
     def get_open_positions(self):
         return self.db.query(OpenPosition).all()
 
-    # ───────────── helpers ─────────────
-    def get_runner_by_name(self, name: str):
-        return self.db.query(Runner).filter(Runner.name == name).first()
-    
+
     # ───────────────────────────── runners ────────────────────────────
     def create_runner(self, data: dict):
         # pre-check – nicer error than raw 500

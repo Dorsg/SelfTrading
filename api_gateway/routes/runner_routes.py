@@ -81,14 +81,6 @@ def get_all_executed_trades():
 
 
 # ─────────────────────────── Runners CRUD ─────────────────────────
-
-# ① quick availability check for the form
-@router.get("/runners/check-name")
-def check_runner_name(name: str = Query(..., min_length=1)):
-    with DBManager() as db:
-        exists = db.get_runner_by_name(name) is not None
-        return {"exists": exists}
-    
     
 @router.post("/runners", status_code=201)
 def create_runner(runner: RunnerCreate):

@@ -104,13 +104,18 @@
 <script setup>
 import { ref, watch } from "vue";
 import { useMessage } from "naive-ui";
-import { isRunnerNameAvailable } from  "@/services/dataManager";
-import { debounce } from "lodash-es"; 
 const emit = defineEmits(["create", "cancel"]);
 
 const formRef = ref(null);
 const formSize = ref("medium");
 const message = useMessage();
+
+const props = defineProps({
+  existingRunnerNames: {
+    type: Array,
+    required: true
+  }
+});
 
 const form = ref({
   name: "",
@@ -143,21 +148,22 @@ const timeFrameOptions = [
 
 const rules = {
   name: [
-    {
-      required: true,
-      message: "Enter name",
-      trigger: ["input", "blur"]
+  {
+    required: true,
+    message: "Enter name",
+    trigger: ["input", "blur"]
+  },
+  {
+    validator: (_rule, value) => {
+      if (!value) return true;
+      const exists = props.existingRunnerNames.some(
+        r => r.name.toLowerCase() === value.toLowerCase()
+      );
+      return exists ? new Error("Name already exists in the table") : true;
     },
-    {
-      // async uniqueness check
-      async validator(_rule, value) {
-        if (!value) return;               // already handled by required rule
-        const available = await isRunnerNameAvailable(value);
-        if (!available) throw new Error("Name already exists");
-      },
-      trigger: "blur"                    // one server call when you leave the field
-    }
-  ],
+    trigger: "blur"
+  }
+],
   strategy: { required: true, message: "Select a strategy", trigger: "change" },
   budget: {
     type: "number",

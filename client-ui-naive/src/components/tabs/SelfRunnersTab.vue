@@ -44,7 +44,7 @@
       title="Create Runner"
       style="width: 600px"
     >
-      <CreateRunnerForm @create="createRunner" @cancel="cancelCreateForm" />
+      <CreateRunnerForm @create="createRunner" @cancel="cancelCreateForm" :existing-runner-names="runners"/>
     </n-modal>
 
     <!-- Runners Grid -->
