@@ -26,7 +26,7 @@ if not DATABASE_URL:
 
 try:
     engine = create_engine(DATABASE_URL, echo=True)
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
     logger.info("Connected to database successfully.")
 except Exception:
     logger.exception("Failed to connect to the database.")

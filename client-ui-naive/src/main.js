@@ -1,7 +1,15 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import { createNaiveUI } from './naive'
+// client-ui-naive/src/main.js
+import { createApp } from "vue";
+import App from "./App.vue";
+import { createNaiveUI } from "./naive";
 
-const app = createApp(App)
-app.use(createNaiveUI())
-app.mount('#app')
+import router from "@/router";          // ← NEW
+import { setAuthHeader } from "@/services/auth";
+
+const saved = localStorage.getItem("token");
+if (saved) setAuthHeader(saved);
+
+const app = createApp(App);
+app.use(createNaiveUI());
+app.use(router);                        // ← NEW
+app.mount("#app");

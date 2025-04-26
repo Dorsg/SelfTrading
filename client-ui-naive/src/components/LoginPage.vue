@@ -14,6 +14,7 @@
             label-placement="top"
             label-width="auto"
             require-mark-placement="right-hanging"
+            @submit.prevent="isLogin ? handleLogin() : handleSignup()"
           >
             <!-- Username -->
             <n-form-item label="Username" path="username">
@@ -31,14 +32,15 @@
                 show-password-on="click"
                 v-model:value="form.password"
                 placeholder="Enter your password"
-                :input-props="{ autocomplete: 'current-password' }"
+                :input-props="{
+                  autocomplete: isLogin ? 'current-password' : 'new-password',
+                }"
               />
             </n-form-item>
 
-            <!-- Sign-Up Only Fields -->
+            <!-- Sign-Up only -->
             <template v-if="!isLogin">
               <n-grid :cols="2" :x-gap="16">
-                <!-- Confirm Password -->
                 <n-form-item-gi label="Confirm Password" path="confirmPassword">
                   <n-input
                     type="password"
@@ -62,7 +64,6 @@
                   <n-input
                     v-model:value="form.ibUser"
                     placeholder="Enter your IB username"
-                    :input-props="{ autocomplete: 'off' }"
                   />
                 </n-form-item-gi>
 
@@ -72,13 +73,12 @@
                     show-password-on="click"
                     v-model:value="form.ibPassword"
                     placeholder="Enter your IB password"
-                    :input-props="{ autocomplete: 'new-password' }"
                   />
                 </n-form-item-gi>
               </n-grid>
             </template>
 
-            <!-- Submit Button -->
+            <!-- Submit -->
             <n-form-item>
               <n-button
                 type="primary"
@@ -91,7 +91,7 @@
             </n-form-item>
           </n-form>
 
-          <!-- Toggle Login / Sign-Up -->
+          <!-- Switch mode -->
           <div class="switch-auth-mode">
             <n-button text @click="isLogin = !isLogin">
               {{
@@ -110,13 +110,15 @@
 <script setup>
 import { ref } from "vue";
 import { darkTheme, useMessage } from "naive-ui";
-
-const emit = defineEmits(["login-success"]);
+import { login as apiLogin, signup as apiSignup } from "@/services/auth";
+import { useRouter, useRoute } from "vue-router";
 
 const formRef = ref(null);
-const message = useMessage();
 const loading = ref(false);
 const isLogin = ref(true);
+const message = useMessage();
+const router = useRouter();
+const route = useRoute();
 
 const form = ref({
   username: "",
@@ -135,104 +137,87 @@ const rules = {
   },
   password: {
     required: true,
-    message: "Password is required",
     trigger: "blur",
+    validator: (_, v) =>
+      v && v.length >= 6
+        ? true
+        : new Error("Password must be at least 6 characters"),
   },
-  // only runs when confirmPassword field is rendered
   confirmPassword: {
-    required: true,
+    required: () => !isLogin.value,
     message: "Please confirm your password",
     trigger: "blur",
-    validator: (rule, value) => {
-      if (!isLogin.value && value !== form.value.password) {
-        return new Error("Passwords do not match");
-      }
-      return true;
-    },
+    validator: (_, v) =>
+      !isLogin.value && v !== form.value.password
+        ? new Error("Passwords do not match")
+        : true,
   },
   email: {
-    required: true,
+    required: () => !isLogin.value,
     message: "Email is required",
     trigger: "blur",
-    validator: (rule, value) => {
-      // simple email check
-      return /^\S+@\S+\.\S+$/.test(value) ? true : new Error("Invalid email");
-    },
+    validator: (_, v) =>
+      /^\S+@\S+\.\S+$/.test(v) ? true : new Error("Invalid email"),
   },
   ibUser: {
-    required: true,
+    required: () => !isLogin.value,
     message: "IB username is required",
-    trigger: "blur",
   },
   ibPassword: {
-    required: true,
+    required: () => !isLogin.value,
     message: "IB password is required",
-    trigger: "blur",
   },
 };
 
-// Mock server calls
-function mockLogin(username, password) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (username === "admin" && password === "123") {
-        resolve("OK");
-      } else {
-        reject(new Error("Invalid username or password"));
-      }
-    }, 1000);
-  });
-}
-
-function mockSignup(data) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // you could inspect `data` here
-      resolve("Signed up");
-    }, 1000);
-  });
-}
-
 function handleLogin() {
-  formRef.value?.validate(async (errors) => {
-    if (!errors) {
-      loading.value = true;
-      try {
-        await mockLogin(form.value.username, form.value.password);
-        message.success("Login successful");
-        emit("login-success");
-      } catch (err) {
-        message.error(err.message);
-      } finally {
-        loading.value = false;
-      }
-    } else {
-      message.error("Please fix form errors");
+  formRef.value?.validate(async (err) => {
+    if (err) return message.error("Please fix form errors");
+    loading.value = true;
+    try {
+      await apiLogin({
+        username: form.value.username,
+        password: form.value.password,
+      });
+      message.success("Login successful");
+      router.replace(route.query.next ?? "/");
+    } catch (e) {
+      message.error(fastapiErrorToString(e));
+    } finally {
+      loading.value = false;
     }
   });
 }
 
 function handleSignup() {
-  formRef.value?.validate(async (errors) => {
-    if (!errors) {
-      loading.value = true;
-      try {
-        await mockSignup(form.value);
-        message.success("Sign-up successful, you can now log in");
-        isLogin.value = true;
-        // reset IB fields & passwords
-        form.value.confirmPassword = "";
-        form.value.ibUser = "";
-        form.value.ibPassword = "";
-      } catch {
-        message.error("Sign-up failed");
-      } finally {
-        loading.value = false;
-      }
-    } else {
-      message.error("Please fix form errors");
+  formRef.value?.validate(async (err) => {
+    if (err) return message.error("Please fix form errors");
+    loading.value = true;
+    try {
+      await apiSignup({
+        username: form.value.username,
+        email: form.value.email,
+        password: form.value.password,
+        // ibUser / ibPassword can be sent later; keep locally for now
+      });
+      message.success("Sign-up successful, you can now log in");
+      isLogin.value = true;
+      form.value.password = form.value.confirmPassword = "";
+    } catch (e) {
+      message.error(fastapiErrorToString(e));
+    } finally {
+      loading.value = false;
     }
   });
+}
+
+function fastapiErrorToString(err) {
+  const d = err.response?.data?.detail;
+  if (Array.isArray(d)) {
+    // join all msgs, e.g. "String should have at least 6 characters; field X required"
+    return d.map(o => o.msg).join("; ");
+  }
+  if (typeof d === "string") return d;
+  return err.message || "Unknown error";
 }
 </script>
 
@@ -241,17 +226,15 @@ function handleSignup() {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - 130px); /* matches header offset */
+  min-height: calc(100vh - 130px);
 }
-
 .login-card {
   padding: 24px;
-  background-color: #1a1a1a;
+  background: #1a1a1a;
   border: 1px solid #444;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
   color: white;
 }
-
 .switch-auth-mode {
   margin-top: 12px;
   text-align: center;

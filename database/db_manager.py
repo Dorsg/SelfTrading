@@ -6,10 +6,10 @@ from typing import List
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert 
 from sqlalchemy.orm import Session
-
+from api_gateway.security.auth import hash_password, verify_password
 from database.db_core import SessionLocal
 from database.models import (
-    AccountSnapshot, ExecutedTrade, OpenPosition, Order, Runner
+    AccountSnapshot, ExecutedTrade, OpenPosition, Order, Runner, User
 )
 
 logger = logging.getLogger(__name__)
@@ -103,10 +103,6 @@ class DBManager:
 
     # ───────────────────────────── runners ────────────────────────────
     def create_runner(self, data: dict):
-        # pre-check – nicer error than raw 500
-        if self.get_runner_by_name(data["name"]):
-            raise ValueError("Runner name already exists")
-
         runner = Runner(**data)
         self.db.add(runner)
         try:
@@ -263,3 +259,29 @@ class DBManager:
     # (nice-to-have) quickly fetch active runners — could drive dashboards
     def get_active_runners(self):
         return self.db.query(Runner).filter(Runner.activation == "active").all()
+    
+    # look-ups
+    def get_user_by_username(self, username: str):
+        return self.db.query(User).filter(User.username == username).first()
+
+    def get_user_by_email(self, email: str):
+        return self.db.query(User).filter(User.email == email).first()
+
+    # create
+    def create_user(self, *, username: str, email: str, password: str):
+        if self.get_user_by_username(username) or self.get_user_by_email(email):
+            raise ValueError("Username or e-mail already taken")
+
+        user = User(username=username,
+                    email=email,
+                    hashed_password=hash_password(password))
+        self.db.add(user)
+        self._commit("Create user")
+        return user
+
+    # auth
+    def authenticate(self, *, username: str, password: str):
+        user = self.get_user_by_username(username)
+        if user and verify_password(password, user.hashed_password):
+            return user
+        return None
