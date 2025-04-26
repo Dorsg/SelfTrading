@@ -31,6 +31,7 @@ axios.interceptors.response.use(
     if (err.response?.status === 401) {
       logout();
       router.push({ name: "Login" });
+      window.dispatchEvent(new Event("auth-logout"));
     }
     return Promise.reject(err);
   },

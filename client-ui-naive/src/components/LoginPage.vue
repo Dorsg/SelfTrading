@@ -180,6 +180,7 @@ function handleLogin() {
 
       message.success("Login successful");
       await router.push(route.query.next ?? { name: "Home" });
+      window.dispatchEvent(new Event("auth-login"));
     } catch (e) {
       message.error(fastapiErrorToString(e));
     } finally {
