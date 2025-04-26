@@ -113,12 +113,14 @@ import { darkTheme, useMessage } from "naive-ui";
 import { login as apiLogin, signup as apiSignup } from "@/services/auth";
 import { useRouter, useRoute } from "vue-router";
 
+const emit = defineEmits(["login-success"]);
+
 const formRef = ref(null);
 const loading = ref(false);
 const isLogin = ref(true);
 const message = useMessage();
-const router = useRouter();
-const route = useRoute();
+const router  = useRouter();
+const route   = useRoute();
 
 const form = ref({
   username: "",
@@ -129,23 +131,25 @@ const form = ref({
   ibPassword: "",
 });
 
+/* ------------- helpers ---------------- */
+function fastapiErrorToString(err) {
+  const d = err.response?.data?.detail;
+  if (Array.isArray(d)) return d.map(o => o.msg).join("; ");
+  if (typeof d === "string") return d;
+  return err.message || "Unknown error";
+}
+
+/* ------------- rules (unchanged) --------------- */
 const rules = {
-  username: {
-    required: true,
-    message: "Username is required",
-    trigger: "blur",
-  },
+  username: { required: true, message: "Username is required", trigger: "blur" },
   password: {
     required: true,
     trigger: "blur",
     validator: (_, v) =>
-      v && v.length >= 6
-        ? true
-        : new Error("Password must be at least 6 characters"),
+      v && v.length >= 6 ? true : new Error("Password must be at least 6 characters"),
   },
   confirmPassword: {
     required: () => !isLogin.value,
-    message: "Please confirm your password",
     trigger: "blur",
     validator: (_, v) =>
       !isLogin.value && v !== form.value.password
@@ -154,32 +158,28 @@ const rules = {
   },
   email: {
     required: () => !isLogin.value,
-    message: "Email is required",
     trigger: "blur",
     validator: (_, v) =>
       /^\S+@\S+\.\S+$/.test(v) ? true : new Error("Invalid email"),
   },
-  ibUser: {
-    required: () => !isLogin.value,
-    message: "IB username is required",
-  },
-  ibPassword: {
-    required: () => !isLogin.value,
-    message: "IB password is required",
-  },
+  ibUser:      { required: () => !isLogin.value, message: "IB username is required" },
+  ibPassword:  { required: () => !isLogin.value, message: "IB password is required" },
 };
 
+/* ------------- actions ---------------- */
 function handleLogin() {
   formRef.value?.validate(async (err) => {
     if (err) return message.error("Please fix form errors");
     loading.value = true;
     try {
-      await apiLogin({
-        username: form.value.username,
-        password: form.value.password,
-      });
+      await apiLogin({ username: form.value.username, password: form.value.password });
+
+      /* mark auth for any legacy checks & notify listeners */
+      localStorage.setItem("isAuthenticated", "true");
+      emit("login-success");
+
       message.success("Login successful");
-      router.replace(route.query.next ?? "/");
+      await router.push(route.query.next ?? { name: "Home" });
     } catch (e) {
       message.error(fastapiErrorToString(e));
     } finally {
@@ -195,9 +195,8 @@ function handleSignup() {
     try {
       await apiSignup({
         username: form.value.username,
-        email: form.value.email,
+        email:    form.value.email,
         password: form.value.password,
-        // ibUser / ibPassword can be sent later; keep locally for now
       });
       message.success("Sign-up successful, you can now log in");
       isLogin.value = true;
@@ -209,17 +208,8 @@ function handleSignup() {
     }
   });
 }
-
-function fastapiErrorToString(err) {
-  const d = err.response?.data?.detail;
-  if (Array.isArray(d)) {
-    // join all msgs, e.g. "String should have at least 6 characters; field X required"
-    return d.map(o => o.msg).join("; ");
-  }
-  if (typeof d === "string") return d;
-  return err.message || "Unknown error";
-}
 </script>
+
 
 <style scoped>
 .login-layout {

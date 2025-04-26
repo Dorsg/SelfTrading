@@ -1,7 +1,7 @@
 // client-ui-naive/src/router/index.js
 import { createRouter, createWebHistory } from "vue-router";
 import LoginPage   from "@/components/LoginPage.vue";
-import Dashboard   from "@/components/tabs/SelfRunnersTab.vue";   // or your real landing page
+import Dashboard   from "@/pages/Dashboard.vue";
 import { logout }  from "@/services/auth";
 
 const routes = [
