@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 from pydantic import BaseModel, EmailStr, StringConstraints
 
 Username = Annotated[str, StringConstraints(strip_whitespace=True,
@@ -9,6 +9,8 @@ class UserCreate(BaseModel):
     username: Username
     email:    EmailStr
     password: Password
+    ib_username: Optional[str] = None   # ← added
+    ib_password: Optional[str] = None   # ← added
 
 class UserLogin(BaseModel):
     username: Username

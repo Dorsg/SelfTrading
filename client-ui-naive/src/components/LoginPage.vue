@@ -174,8 +174,6 @@ function handleLogin() {
     try {
       await apiLogin({ username: form.value.username, password: form.value.password });
 
-      /* mark auth for any legacy checks & notify listeners */
-      localStorage.setItem("isAuthenticated", "true");
       emit("login-success");
 
       message.success("Login successful");
@@ -198,6 +196,8 @@ function handleSignup() {
         username: form.value.username,
         email:    form.value.email,
         password: form.value.password,
+        ib_username: form.value.ibUser || null,
+        ib_password: form.value.ibPassword || null,
       });
       message.success("Sign-up successful, you can now log in");
       isLogin.value = true;
