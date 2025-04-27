@@ -59,6 +59,7 @@ export function logout() {
   clearAuthHeader();
   _user.value = null;
   broadcast();
+  sessionStorage.clear();
   window.dispatchEvent(new Event("auth-logout"));
 }
 

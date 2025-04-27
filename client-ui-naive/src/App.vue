@@ -6,10 +6,15 @@
         <div class="title">SelfTrading</div>
 
         <div v-if="isAuth" class="user-box">
-          <span class="uname">{{ user?.username }}</span>
-          <n-button circle quaternary size="large" @click="handleLogout">
-            <n-icon :size="22" :component="LogOutOutline" />
-          </n-button>
+          <span class="uname">{{ capitalizedUsername }}</span>
+          <n-tooltip trigger="hover" placement="bottom">
+            <template #trigger>
+              <n-button circle quaternary size="large" @click="handleLogout">
+                <n-icon :size="27" :component="LogOutOutline" />
+              </n-button>
+            </template>
+            Logout
+          </n-tooltip>
         </div>
       </n-layout-header>
 
@@ -22,6 +27,7 @@
 <script setup>
 import {
   ref,
+  computed,
   watch,
   onMounted,
   onBeforeUnmount,
@@ -31,15 +37,21 @@ import { darkTheme } from "naive-ui";
 import { LogOutOutline } from "@vicons/ionicons5";
 import {
   logout as doLogout,
-  useCurrentUser,          //  <<<─── added
+  useCurrentUser,
 } from "@/services/auth";
 
 const router = useRouter();
 
-const user   = useCurrentUser();        // reactive singleton
+const user   = useCurrentUser(); // reactive singleton
 const isAuth = ref(!!user.value);
 
 watch(user, (v) => (isAuth.value = !!v));
+
+/* Capitalized username */
+const capitalizedUsername = computed(() => {
+  if (!user.value?.username) return "";
+  return user.value.username.charAt(0).toUpperCase() + user.value.username.slice(1);
+});
 
 /* ───────── helpers ───────── */
 function updateAuth() {
@@ -76,7 +88,17 @@ html, body, #app { height:100%; margin:0; background:#121212; }
   background:#1a1a1a;
   color:#fff;
 }
-.title   { font-size:20px; font-weight:600; }
-.user-box{ display:flex; align-items:center; gap:12px; }
-.uname   { font-weight:500; }
+.title {
+  font-size:20px;
+  font-weight:600;
+}
+.user-box {
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.uname {
+  font-size:16px;  /* bigger font */
+  font-weight:600;
+}
 </style>
