@@ -85,3 +85,13 @@ export async function deactivateRunnersAPI(ids) {
     return null;
   }
 }
+
+export async function fetchIbStatus() {
+  try {
+    const { data } = await axios.get(`${BASE_URL}/ib/status`);
+    return data.connected;        // boolean
+  } catch (err) {
+    console.error('Error fetching IB status:', err);
+    return false;                 // pessimistic fallback
+  }
+}

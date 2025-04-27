@@ -6,6 +6,19 @@
         <div class="title">SelfTrading</div>
 
         <div v-if="isAuth" class="user-box">
+          <n-tag
+            round
+            size="small"
+            :bordered="false"
+            :type="ibConnected ? 'success' : 'error'"
+            class="ib-label"
+          >
+            <template #icon>
+              <n-icon :component="ibConnected ? CheckmarkCircleOutline : CloseCircleOutline" />
+            </template>
+            IB
+          </n-tag>
+
           <span class="uname">{{ capitalizedUsername }}</span>
           <n-tooltip trigger="hover" placement="bottom">
             <template #trigger>
@@ -34,14 +47,16 @@ import {
 } from "vue";
 import { useRouter } from "vue-router";
 import { darkTheme } from "naive-ui";
-import { LogOutOutline } from "@vicons/ionicons5";
+import { LogOutOutline, CheckmarkCircleOutline, CloseCircleOutline } from "@vicons/ionicons5";
 import {
   logout as doLogout,
   useCurrentUser,
 } from "@/services/auth";
+import { fetchIbStatus } from '@/services/dataManager';
 
 const router = useRouter();
-
+const ibConnected = ref(false);
+let statusTimer = null;
 const user   = useCurrentUser(); // reactive singleton
 const isAuth = ref(!!user.value);
 
@@ -64,12 +79,19 @@ function handleLogout() {
   router.push({ name: "Login" });
 }
 
+async function refreshIbStatus () {
+  ibConnected.value = await fetchIbStatus();
+}
+
 /* listen for login / logout broadcasts */
 onMounted(() => {
+  refreshIbStatus();                 // first hit
+  statusTimer = setInterval(refreshIbStatus, 10_000)
   window.addEventListener("auth-login",  updateAuth);
   window.addEventListener("auth-logout", updateAuth);
 });
 onBeforeUnmount(() => {
+  clearInterval(statusTimer);
   window.removeEventListener("auth-login",  updateAuth);
   window.removeEventListener("auth-logout", updateAuth);
 });
@@ -100,5 +122,8 @@ html, body, #app { height:100%; margin:0; background:#121212; }
 .uname {
   font-size:16px;  /* bigger font */
   font-weight:600;
+}
+.ib-label {
+  font-weight: 600;
 }
 </style>

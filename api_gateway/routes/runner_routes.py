@@ -1,5 +1,6 @@
 from __future__ import annotations
-
+import socket
+from starlette.status import HTTP_200_OK
 import logging
 from datetime import datetime
 from typing import List
@@ -197,3 +198,22 @@ def get_active_runners(current: User = Depends(get_current_user)):
         rows = [to_dict(r) for r in db.get_active_runners(user_id=current.id)]
         logger.debug("active runners rows=%d", len(rows))
         return rows
+
+@router.get("/ib/status", status_code=HTTP_200_OK)
+def ib_connection_status(current: User = Depends(get_current_user)):
+    """
+    Quick-probe the user’s IB-Gateway container (ib-gateway-<uid>:4004).
+
+    Returns:
+        {"connected": true}   when TCP-4004 opens within 2 s
+        {"connected": false}  otherwise
+    """
+    _log_call("GET /ib/status", user=current)
+
+    host = f"ib-gateway-{current.id}"
+    port = 4004
+    try:
+        with socket.create_connection((host, port), 2):
+            return {"connected": True}
+    except OSError:
+        return {"connected": False}
