@@ -16,6 +16,7 @@ from typing import List
 
 import docker
 from docker.errors import APIError, NotFound
+from ib_insync import IB
 from psycopg2.errors import UndefinedTable
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
@@ -41,73 +42,98 @@ cli = docker.from_env()
 
 # ───────────────── helpers ───────────────────────────────────
 
-
-def _wait_api(host: str, port: int = API_PORT, tries: int = 60, delay: int = 2) -> bool:
+def _wait_api(host: str, port: int = 4004, tries: int = 60, delay: int = 2) -> bool:
     """
-    Poll <host>:<port> until it answers or we run out of tries.
-    Returns True if the socket opened, False otherwise.
+    Check that the IB Gateway is truly ready by:
+    1. Ensuring the TCP socket opens
+    2. Actually connecting with IB() and immediately disconnecting
     """
+    log.debug("Checking socket readiness for %s:%d", host, port)
     for i in range(1, tries + 1):
         try:
-            with socket.create_connection((host, port), 2):
-                log.info("%s:%s API port open (try %s/%s)", host, port, i, tries)
-                return True
-        except (socket.timeout, OSError):
-            if i == 1:
-                log.debug("%s:%s waiting for API …", host, port)
+            with socket.create_connection((host, port), timeout=2):
+                log.info("%s:%d TCP socket open (try %d/%d)", host, port, i, tries)
+                break
+        except Exception:
+            log.debug("Socket not open on %s:%d (try %d/%d)", host, port, i, tries)
             time.sleep(delay)
-    log.error("%s:%s never opened after %s tries", host, port, tries)
+    else:
+        log.error("Socket never opened on %s:%d", host, port)
+        return False
+
+    log.debug("Checking IB API readiness via ib.connect() on %s:%d", host, port)
+    ib = IB()
+    for i in range(1, tries + 1):
+        try:
+            ib.connect(host, port, clientId=9999, timeout=5)
+            ib.disconnect()
+            log.info("IB Gateway ready on %s:%d (API check passed, try %d/%d)", host, port, i, tries)
+            return True
+        except Exception as e:
+            log.debug("IB API not ready on %s:%d — %s (try %d/%d)", host, port, type(e).__name__, i, tries)
+            time.sleep(delay)
+
+    log.error("Gave up waiting for IB API on %s:%d", host, port)
     return False
 
 
-def _run_and_attach(name: str, env: dict) -> None:
+def _run_and_attach(name: str, env: dict) -> bool:
     """
-    Launch the gateway container on the compose network *without* publishing
-    its ports to the host.  Inside the network it will be reachable via
-    TCP-4004 at hostname == <name>.
+    Launch the gateway container and verify it becomes reachable.
+    Returns True if ready, False if failed (container removed).
     """
-    log.info("→ docker run %s (env keys=%d)", name, len(env))
-    container = cli.containers.run(
-        IMAGE,
-        name=name,
-        hostname=name,
-        network=DOCKER_NET,
-        detach=True,
-        environment=env,
-        volumes={SETTINGS_VOL: {"bind": "/home/ibgateway/tws_settings"}},
-        restart_policy={"Name": "always"},
-        # Uncomment next line if you want VNC access on a random host port
-        ports={"5900/tcp": ("127.0.0.1", None)},
-    )
+    log.info("Launching container %s with %d env vars", name, len(env))
+    try:
+        container = cli.containers.run(
+            IMAGE,
+            name=name,
+            hostname=name,
+            network=DOCKER_NET,
+            detach=True,
+            environment=env,
+            volumes={SETTINGS_VOL: {"bind": "/home/ibgateway/tws_settings"}},
+            restart_policy={"Name": "always"},
+            ports={"5900/tcp": ("127.0.0.1", None)},
+        )
+        cli.networks.get(DOCKER_NET).connect(container, aliases=[name])
+        log.debug("Attached %s to network %s with alias %s", name, DOCKER_NET, name)
+    except Exception as e:
+        log.exception("Failed to run container %s: %s", name, type(e).__name__)
+        return False
 
-    # Belt-and-braces: add explicit DNS alias even though `hostname=` should do it
-    cli.networks.get(DOCKER_NET).connect(container, aliases=[name])
-    log.debug("  attached %s to %s with alias=%s", name, DOCKER_NET, name)
-
-    # Block until the API socket is ready (or give up)
     if not _wait_api(name, API_PORT):
         log.warning("%s: API not reachable – removing container", name)
         container.remove(force=True)
+        return False
+
+    log.info("Container %s ready and reachable", name)
+    return True
 
 
 def ensure_container(user) -> None:
     """
     Make sure a gateway container for *user* exists and is running.
-    Creates / restarts it if necessary.
+    Retries once if container failed to become ready.
     """
     name = f"ib-gateway-{user.id}"
-    log.debug("check-container %s for user=%s", name, user.username)
-    log.info("DOR ib username: %s ib password: %s", user.ib_username, user.ib_password)
+    log.debug("Ensuring container %s for user=%s", name, user.username)
 
     try:
         c = cli.containers.get(name)
         if c.status != "running":
-            log.warning("%s status=%s – restarting …", name, c.status)
+            log.warning("%s status=%s – restarting", name, c.status)
             c.restart()
-            _wait_api(name, API_PORT)
-        return
+            if not _wait_api(name, API_PORT):
+                log.warning("%s failed to restart — removing", name)
+                c.remove(force=True)
+            else:
+                log.info("Restarted %s and ready", name)
+                return
+        else:
+            log.info("%s already running", name)
+            return
     except NotFound:
-        log.info("%s does not exist – will create", name)
+        log.info("%s does not exist – creating", name)
     except APIError:
         log.exception("Docker API error while inspecting %s", name)
         return
@@ -128,9 +154,12 @@ def ensure_container(user) -> None:
         "ENABLE_VNC": "yes",
         "ENABLE_VNC_SERVER": "true",
         "VNC_SERVER_PASSWORD": "trader123",
-        "OVERRIDE_API_PORT": "4004",  # ← ADD THIS LINE
+        "OVERRIDE_API_PORT": "4004",
     }
-    _run_and_attach(name, env)
+
+    success = _run_and_attach(name, env)
+    if not success:
+        log.error("Failed to bring up container %s for user %s", name, user.username)
 
 
 def prune_orphans(active_ids: set[int]) -> None:
@@ -143,7 +172,7 @@ def prune_orphans(active_ids: set[int]) -> None:
         except ValueError:
             continue
         if uid not in active_ids:
-            log.info("pruning orphan %s (uid=%s not in %s)", c.name, uid, sorted(active_ids))
+            log.info("Pruning orphan %s (uid=%s not in %s)", c.name, uid, sorted(active_ids))
             c.remove(force=True)
 
 
@@ -155,15 +184,13 @@ def fetch_users() -> List:
 
 
 def main() -> None:
-    log.info(
-        "Gateway-manager starting on network %s  (interval=%ss)", DOCKER_NET, CHECK_INTERVAL
-    )
+    log.info("Gateway-manager starting on network %s  (interval=%ss)", DOCKER_NET, CHECK_INTERVAL)
 
     while True:
         loop_start = time.time()
         try:
             users = fetch_users()
-            log.info("IB-users in DB: %d  ids=%s", len(users), [u.id for u in users])
+            log.info("Found %d IB-user(s) in DB: %s", len(users), [u.id for u in users])
         except (OperationalError, ProgrammingError, UndefinedTable) as e:
             log.warning("DB not ready (%s) – retrying in %s s", e.__class__.__name__, CHECK_INTERVAL)
             time.sleep(CHECK_INTERVAL)
@@ -174,9 +201,8 @@ def main() -> None:
             continue
 
         ids = {u.id for u in users}
-
         running = {c.name for c in cli.containers.list(filters={"ancestor": IMAGE})}
-        log.info("Gateway containers running: %s", sorted(running))
+        log.info("Currently running containers: %s", sorted(running))
 
         for u in users:
             ensure_container(u)
@@ -184,7 +210,7 @@ def main() -> None:
 
         elapsed = time.time() - loop_start
         sleep_for = max(0, CHECK_INTERVAL - elapsed)
-        log.debug("loop done in %.1f s → sleep %.1f s", elapsed, sleep_for)
+        log.debug("Loop finished in %.1f s – sleeping %.1f s", elapsed, sleep_for)
         time.sleep(sleep_for)
 
 

@@ -30,14 +30,16 @@ def safe(fn, *args):
 
 def create_ib_for_user(user) -> IBManager:
     """
-    Each user’s gateway container is named  ib-gateway-<user.id>
+    Each user’s gateway container is named ib-gateway-<user.id>
     and always listens on port 4004.
     """
     host = f"ib-gateway-{user.id}"
     port = 4004
     client_id = 100 + user.id
-    logger.debug("Creating IBManager(host=%s,port=%s,cid=%s)", host, port, client_id)
-    return IBManager(host=host, port=port, client_id=client_id)
+    logger.debug("Creating IBManager(host=%s, port=%s, client_id=%s)", host, port, client_id)
+    ib = IBManager(host=host, port=port, client_id=client_id)
+    logger.info("IBManager created for user %s (host=%s)", user.username, host)
+    return ib
 
 # ───────────────────── per-user work ─────────────────────
 def handle_user(user) -> None:
@@ -46,22 +48,29 @@ def handle_user(user) -> None:
     db = DBManager()
 
     try:
+        logger.debug("Connecting to IB gateway for %s …", user.username)
+        ib.connect()
+        logger.info("Connected to IB gateway for %s", user.username)
+
         # snapshot (once per day)
         if not db.get_today_snapshot(user.id):
+            logger.debug("Fetching account snapshot for %s", user.username)
             data = ib.get_account_information()
             if data:
                 db.create_account_snapshot(user_id=user.id, snapshot_data=data)
-                logger.info("snapshot stored for %s", user.username)
+                logger.info("Snapshot stored for %s", user.username)
             else:
                 logger.warning("No snapshot data for %s (gateway returned empty)", user.username)
 
         # positions
+        logger.debug("Fetching open positions for %s", user.username)
         positions = ib.get_open_positions()
         logger.info("%d open positions for %s", len(positions), user.username)
         if positions:
             db.update_open_positions(user_id=user.id, positions=positions)
 
         # place a test order
+        logger.debug("Placing test order for %s", user.username)
         result = ib.place_test_aggressive_limit(user_id=user.id, runner_id=user.id + 100)
 
         if result.get("status") == "market_closed":
@@ -72,15 +81,18 @@ def handle_user(user) -> None:
             logger.info("Test order placed for %s: %s", user.username, result)
 
         # always sync orders & trades
+        logger.debug("Syncing orders for %s", user.username)
         ib.sync_orders_from_ibkr(user_id=user.id)
+        logger.debug("Syncing executed trades for %s", user.username)
         ib.sync_executed_trades(user_id=user.id)
+
+    except Exception:
+        logger.exception("Exception while handling user %s", user.username)
 
     finally:
         db.close()
         ib.disconnect()
         logger.debug("Closed DB + disconnected IB for %s", user.username)
-
-
 
 
 def process_all_users():
