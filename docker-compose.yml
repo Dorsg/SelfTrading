@@ -1,11 +1,8 @@
-version: "3.9"
 
 volumes:
-  pg_data:
+  pg_data: 
   ib_settings:
-
 services:
-  # ────────── Postgres ──────────
   db:
     image: postgres:15
     container_name: trading-db
@@ -18,6 +15,8 @@ services:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
+    networks:
+      - selftrading-network
     env_file:
       - .env
 
@@ -31,8 +30,9 @@ services:
         condition: service_started
     env_file:
       - .env
+    networks:
+      - selftrading-network
 
-  # ────────── FastAPI ──────────
   api_gateway:
     build:
       context: .
@@ -49,8 +49,9 @@ services:
         condition: service_completed_successfully
     env_file:
       - .env
+    networks:
+      - selftrading-network
 
-  # ────────── Vue UI ──────────
   client-ui:
     build:
       context: .
@@ -60,14 +61,16 @@ services:
     depends_on:
       api_gateway:
         condition: service_started
+    networks:
+      - selftrading-network
 
-  # ────────── Scheduler ──────────
   scheduler:
     build:
       context: .
       dockerfile: Dockerfile.scheduler
     volumes:
       - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
     command: python runner_scheduler/main.py
     depends_on:
       db:
@@ -77,22 +80,9 @@ services:
     restart: always
     env_file:
       - .env
+    networks:
+      - selftrading-network
 
-  # ────────── Gateway Manager ──────────
-  gateway-manager:
-    build:
-      context: .
-      dockerfile: Dockerfile.scheduler
-    volumes:
-      - .:/app
-      - ib_settings:/home/ibgateway/tws_settings
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: python gateway_manager.py
-    depends_on:
-      db:
-        condition: service_started
-      db-init:
-        condition: service_completed_successfully
-    restart: always
-    env_file:
-      - .env
+networks:
+  selftrading-network:
+    driver: bridge

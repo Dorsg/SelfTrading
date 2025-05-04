@@ -13,6 +13,8 @@ from api_gateway.routes.schemas.runner import RunnerCreate, RunnerIds
 from database.db_manager import DBManager
 from sqlalchemy.inspection import inspect as sqla_inspect
 
+from ib_manager.ib_connector import IBBusinessManager
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -200,20 +202,26 @@ def get_active_runners(current: User = Depends(get_current_user)):
         return rows
 
 @router.get("/ib/status", status_code=HTTP_200_OK)
-def ib_connection_status(current: User = Depends(get_current_user)):
+async def ib_connection_status(current: User = Depends(get_current_user)):
     """
-    Quick-probe the user’s IB-Gateway container (ib-gateway-<uid>:4004).
-
-    Returns:
-        {"connected": true}   when TCP-4004 opens within 2 s
-        {"connected": false}  otherwise
+    A lightweight check to ensure IB Gateway is alive.
+    Tries to fetch a small piece of data (e.g., account summary).
     """
-    _log_call("GET /ib/status", user=current)
-
-    host = f"ib-gateway-{current.id}"
-    port = 4004
     try:
-        with socket.create_connection((host, port), 2):
+        # Initialize the IBBusinessManager to connect to IB Gateway
+        business_manager = IBBusinessManager(current)
+        await business_manager.connect()  # Attempt connection to IB Gateway
+        account_info = await business_manager.get_account_information()  # Fetch some data
+
+        # If we get a valid response, the connection is alive
+        if account_info:
             return {"connected": True}
-    except OSError:
+    except Exception as e:
+        logger.error(f"Error checking IB Gateway status for user {current.id}: {e}")
         return {"connected": False}
+    finally:
+        # Ensure we disconnect from the IB Gateway after the check
+        if business_manager and business_manager.ib.isConnected():
+            business_manager.disconnect()
+
+    return {"connected": False}
