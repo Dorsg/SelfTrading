@@ -3,16 +3,15 @@ version: "3.8"
 services:
   # — TLS Reverse-proxy
   caddy:
-    image: caddy:2
+    image: caddy:latest
     container_name: caddy
-    restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:80"     
+      - "443:443"  
     volumes:
+      - caddy_data:/data       
+      - caddy_config:/config  
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
     networks:
       - selftrading-network
 
@@ -91,3 +90,4 @@ volumes:
   pg_data:
   caddy_data:
   caddy_config:
+  ib_settings:
