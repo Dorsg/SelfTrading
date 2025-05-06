@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from dotenv import load_dotenv
-import os
 from database.db_manager import DBManager
 from database.models import User
 from ib_manager.gateway_manager import start_container, container_exists
@@ -15,7 +14,7 @@ logging.basicConfig(
     level=logging.INFO,  # Change to INFO to minimize debug noise
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
-log = logging.getLogger("User-Manager")
+log = logging.getLogger("Scheduler")
 
 
 async def start_user_container(user: User):
@@ -65,6 +64,8 @@ async def main_loop():
     while True:
         log.info("Starting a new loop iteration...")
         users = DBManager().get_users_with_ib()
+        if not users:
+            log.info("No users with IB accounts found.")
         for user in users:
             # Step 1: Start container if needed
             await start_user_container(user)
@@ -88,4 +89,4 @@ async def main_loop():
             business_manager.disconnect()
 
         log.info("Sleeping before next iteration...")
-        await asyncio.sleep(100)  # Sleep for 50 seconds before the next iteration
+        await asyncio.sleep(30 * 60)  # 15 minutes  
