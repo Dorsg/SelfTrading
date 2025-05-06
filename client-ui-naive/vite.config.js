@@ -12,31 +12,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      // Proxy any /api request to FastAPI
       '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/auth': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/account': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/orders': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/executed-trades': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/runners': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/ib/status': {
         target: 'http://localhost:8000',
         changeOrigin: true,
       },

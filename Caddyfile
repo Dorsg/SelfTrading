@@ -1,23 +1,16 @@
 {
-  email  dorsabag93@gmail.com
+  email dorsabag93@gmail.com
 }
 
 selftrading.org {
   encode gzip
 
-  # — static UI (via your client-ui container) —
+  # Serve static UI except API
   @static {
-    path *
-    not path /api/* /auth/* /account/* /orders* /executed-trades* /runners* /ib/status
+    not path /api/*
   }
-  reverse_proxy @static    client-ui:80
+  reverse_proxy @static client-ui:80
 
-  # — API endpoints —
-  reverse_proxy /api/*             api_gateway:8000
-  reverse_proxy /auth/*            api_gateway:8000
-  reverse_proxy /account/*         api_gateway:8000
-  reverse_proxy /orders*           api_gateway:8000
-  reverse_proxy /executed-trades*  api_gateway:8000
-  reverse_proxy /runners*          api_gateway:8000
-  reverse_proxy /ib/status         api_gateway:8000
+  # Single proxy rule for all API routes
+  reverse_proxy /api/* api_gateway:8000
 }

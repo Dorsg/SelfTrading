@@ -29,14 +29,14 @@ if (savedUser) _user.value = JSON.parse(savedUser);
 
 // **call only after successful login**
 async function fetchMe() {
-  const { data } = await axios.get(`/auth/me`);
+  const { data } = await axios.get(`/api/auth/me`);
   _user.value = data;
   localStorage.setItem("user", JSON.stringify(data));
   broadcast();
 }
 
 export async function signup(payload) {
-  return axios.post(`/auth/signup`, {
+  return axios.post(`/api/auth/signup`, {
     username: payload.username,
     email: payload.email,
     password: payload.password,
@@ -46,7 +46,7 @@ export async function signup(payload) {
 }
 
 export async function login(payload) {
-  const { data } = await axios.post(`/auth/login`, payload);
+  const { data } = await axios.post(`/api/auth/login`, payload);
   localStorage.setItem("token", data.access_token);
   setAuthHeader(data.access_token);
   await fetchMe(); // populate user singleton

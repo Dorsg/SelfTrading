@@ -4,7 +4,7 @@ axios.defaults.baseURL = "";
 
 export async function fetchAccountSnapshot() {
   try {
-    const response = await axios.get(`/account/snapshot`);
+    const response = await axios.get(`/api/account/snapshot`);
     return response.data;
   } catch (error) {
     console.error('Error fetching account snapshot:', error);
@@ -14,7 +14,7 @@ export async function fetchAccountSnapshot() {
 
 export async function fetchOpenPositions() {
   try {
-    const response = await axios.get(`/account/positions`);
+    const response = await axios.get(`/api/account/positions`);
     return response.data;
   } catch (error) {
     console.error('Error fetching open positions:', error);
@@ -24,7 +24,7 @@ export async function fetchOpenPositions() {
 
 export async function fetchOrders() {
   try {
-    const response = await axios.get(`/orders`);
+    const response = await axios.get(`/api/orders`);
     return response.data;
   } catch (error) {
     console.error('Error fetching orders:', error);
@@ -34,7 +34,7 @@ export async function fetchOrders() {
 
 export async function fetchExecutedTrades() {
   try {
-    const response = await axios.get(`/executed-trades`);
+    const response = await axios.get(`/api/executed-trades`);
     return response.data;
   } catch (error) {
     console.error('Error fetching executed trades:', error);
@@ -46,7 +46,7 @@ export async function fetchExecutedTrades() {
 export async function createRunnerAPI(runnerData) {
   try {
     console.log("Sending runnerData:", runnerData);
-    const response = await axios.post(`/runners`, runnerData);
+    const response = await axios.post(`/api/runners`, runnerData);
     return response.data;
   } catch (error) {
     console.error('Error creating runner:', error);
@@ -56,7 +56,7 @@ export async function createRunnerAPI(runnerData) {
 
 export async function deleteRunnersAPI(ids) {
   try {
-    const response = await axios.delete(`/runners`, {
+    const response = await axios.delete(`/api/runners`, {
       data: { ids }, // sending array of IDs
     });
     return response.data;
@@ -68,7 +68,7 @@ export async function deleteRunnersAPI(ids) {
 
 export async function activateRunnersAPI(ids) {
   try {
-    const response = await axios.post(`/runners/activate`, { ids });
+    const response = await axios.post(`/api/runners/activate`, { ids });
     return response.data;
   } catch (error) {
     console.error('Error activating runners:', error);
@@ -78,7 +78,7 @@ export async function activateRunnersAPI(ids) {
 
 export async function deactivateRunnersAPI(ids) {
   try {
-    const response = await axios.post(`/runners/deactivate`, { ids });
+    const response = await axios.post(`/api/runners/deactivate`, { ids });
     return response.data;
   } catch (error) {
     console.error('Error deactivating runners:', error);
@@ -88,7 +88,7 @@ export async function deactivateRunnersAPI(ids) {
 
 export async function fetchIbStatus() {
   try {
-    const { data } = await axios.get(`/ib/status`);
+    const { data } = await axios.get(`/api/ib/status`);
     return data.connected;   
   } catch (err) {
     console.error('Error fetching IB status:', err);
