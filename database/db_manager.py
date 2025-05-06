@@ -198,9 +198,7 @@ class DBManager:
             .order_by(Runner.created_at.asc())
             .first()
         )
-        if runner is None:
-            raise ValueError(f"No runners found for user {user_id}")
-        return runner.id
+        return runner.id if runner else None
     # ─────────────────── orders ───────────────────
     def save_order(self, order_data: dict) -> Order | None:
         if "user_id" not in order_data:
