@@ -116,7 +116,7 @@ class Order(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     runner_id = Column(
-        Integer, ForeignKey("runners.id", ondelete="CASCADE"), nullable=False, index=True
+        Integer, ForeignKey("runners.id", ondelete="CASCADE"), nullable=True, index=True
     )
 
     ibkr_perm_id = Column(Integer, nullable=False, unique=True, index=True)

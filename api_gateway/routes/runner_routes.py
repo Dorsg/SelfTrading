@@ -36,7 +36,7 @@ def _log_call(name: str, *, user: User, extra: str | None = None) -> None:
 
 # ───────────────── account info ─────────────────────────────────────
 @router.get("/account/snapshot")
-def get_account_snapshot(current: User = Depends(get_current_user)):
+async def get_account_snapshot(current: User = Depends(get_current_user)):
     """
     Return today’s account snapshot if we already stored one;
     otherwise pull it via the user’s dedicated IB-Gateway container
@@ -52,7 +52,7 @@ def get_account_snapshot(current: User = Depends(get_current_user)):
                 return to_dict(snap)
 
             # pull live from gateway
-            from ib_manager.ib_connector import IBManager
+            from ib_manager.ib_connector import IBBusinessManager
 
             gateway_host = f"ib-gateway-{current.id}"
             logger.info(
@@ -61,14 +61,10 @@ def get_account_snapshot(current: User = Depends(get_current_user)):
                 4004,
                 100 + current.id,
             )
-            ib = IBManager(
-                host=gateway_host,
-                port=4004,
-                client_id=100 + current.id,
-            )
-
-            data = ib.get_account_information()
-            ib.disconnect()
+            business_manager = IBBusinessManager(current)
+            await business_manager.connect()  
+            data = await business_manager.get_account_information()
+            await business_manager.disconnect()
             logger.debug("ib.get_account_information returned keys=%d", len(data))
 
             if not data:

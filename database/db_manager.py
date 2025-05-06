@@ -191,7 +191,16 @@ class DBManager:
             .filter(Runner.user_id == user_id, Runner.activation == "active")
             .all()
         )
-
+    def get_existing_runner_id(self, user_id: int) -> int:
+        runner = (
+            self.db.query(Runner.id)
+            .filter(Runner.user_id == user_id)
+            .order_by(Runner.created_at.asc())
+            .first()
+        )
+        if runner is None:
+            raise ValueError(f"No runners found for user {user_id}")
+        return runner.id
     # ─────────────────── orders ───────────────────
     def save_order(self, order_data: dict) -> Order | None:
         if "user_id" not in order_data:

@@ -48,11 +48,16 @@ async def fetch_open_positions(user: User, db: DBManager, business_manager: IBBu
         db.update_open_positions(user_id=user.id, positions=positions)
 
 async def place_test_order(user: User, business_manager: IBBusinessManager):
-    business_manager.place_test_aggressive_limit(user_id=user.id, runner_id=1)
+    db = DBManager()
+    existing_runner_id = db.get_existing_runner_id(user_id=user.id)
+    if existing_runner_id is None:
+        log.warning("No existing runner ID found for user %s", user.username)
+        return
+    await business_manager.place_test_aggressive_limit(user_id=user.id, runner_id=existing_runner_id)
     await asyncio.sleep(2)
 
 async def sync_orders_and_trades(user: User, business_manager: IBBusinessManager):
-    business_manager.sync_orders_from_ibkr(user_id=user.id)
+    await business_manager.sync_orders_from_ibkr(user_id=user.id)
     await asyncio.sleep(2)
 
     business_manager.sync_executed_trades(user_id=user.id)
@@ -89,4 +94,5 @@ async def main_loop():
             business_manager.disconnect()
 
         log.info("Sleeping before next iteration...")
-        await asyncio.sleep(30 * 60)  # 15 minutes  
+        ## sleep for 30 minutes 
+        await asyncio.sleep(1800)

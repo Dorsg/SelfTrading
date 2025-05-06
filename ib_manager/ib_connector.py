@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import math
 import random
@@ -80,7 +81,7 @@ class IBBusinessManager:
         log.debug("Retrieved %d open positions", len(out))
         return out
 
-    def place_test_aggressive_limit(self, *, user_id: int, runner_id: int) -> dict:
+    async def place_test_aggressive_limit(self, *, user_id: int, runner_id: int) -> dict:
         try:
             symbol = random.choice(["AAPL", "NVDA", "TSLA", "PLTR"])
             contract = Stock(symbol, "SMART", "USD")
@@ -96,14 +97,14 @@ class IBBusinessManager:
                 return
 
             lmt_px = round(price * 1.02, 2)
-            self.ib.qualifyContracts(contract)
+            await self.ib.qualifyContractsAsync(contract)
             order = LimitOrder("BUY", 1, lmt_px, tif="GTC", outsideRth=True)
             trade = self.ib.placeOrder(contract, order)
 
             for _ in range(50):
                 if trade.order.permId:
                     break
-                self.ib.sleep(0.1)
+                await asyncio.sleep(0.1)
 
             perm_id = trade.order.permId
             status = trade.orderStatus.status
@@ -128,20 +129,20 @@ class IBBusinessManager:
         except Exception:
             log.exception("Error placing test aggressive limit order")
             return {"status": "error"}
+        
 
-    def sync_orders_from_ibkr(self, *, user_id: int) -> None:
+    async def sync_orders_from_ibkr(self, *, user_id: int) -> None:
         try:
             log.debug("Starting synchronization of orders for user %d", user_id)
-            count = 0
+            trades = list(self.ib.trades())
 
-            # Check if trades exist
-            trades = list(self.ib.trades())  # Convert to list to log if empty
             if not trades:
                 log.warning("No orders found for user %d", user_id)
-            
-            for tr in trades:
-                log.debug("Processing trade: %s", tr)
+                return
 
+            orders_to_sync = []
+
+            for tr in trades:
                 pid = tr.order.permId
                 if not pid:
                     log.warning("Skipping trade with no permId: %s", tr)
@@ -149,7 +150,7 @@ class IBBusinessManager:
 
                 order_data = {
                     "user_id": user_id,
-                    "runner_id": None,
+                    "runner_id": None, 
                     "ibkr_perm_id": pid,
                     "symbol": tr.contract.symbol,
                     "action": tr.order.action,
@@ -163,20 +164,15 @@ class IBBusinessManager:
                     "account": tr.order.account or "",
                 }
 
-                log.debug("Prepared order data: %s", order_data)
+                orders_to_sync.append(order_data)
 
-                # Sync orders to DB
-                try:
-                    DBManager().sync_orders([order_data])
-                    log.debug("Order with permId %d synchronized successfully", pid)
-                    count += 1
-                except Exception as e:
-                    log.error("Failed to sync order with permId %d: %s", pid, e)
-
-            log.debug("Synchronized %d orders from IBKR for user %d", count, user_id)
+            if orders_to_sync:
+                await asyncio.to_thread(DBManager().sync_orders, orders_to_sync)
+                log.info("Synchronized %d orders from IBKR for user %d", len(orders_to_sync), user_id)
 
         except Exception:
             log.exception("sync_orders_from_ibkr failed for user %d", user_id)
+
 
 
     def sync_executed_trades(self, *, user_id: int) -> None:

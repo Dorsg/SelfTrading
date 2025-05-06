@@ -86,7 +86,7 @@ async function refreshIbStatus () {
 /* listen for login / logout broadcasts */
 onMounted(() => {
   refreshIbStatus();                 // first hit
-  statusTimer = setInterval(refreshIbStatus, 10_000)
+  statusTimer = setInterval(refreshIbStatus, 100_000)
   window.addEventListener("auth-login",  updateAuth);
   window.addEventListener("auth-logout", updateAuth);
 });
