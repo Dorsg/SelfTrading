@@ -64,7 +64,7 @@ async def get_account_snapshot(current: User = Depends(get_current_user)):
             business_manager = IBBusinessManager(current)
             await business_manager.connect()  
             data = await business_manager.get_account_information()
-            await business_manager.disconnect()
+            
             logger.debug("ib.get_account_information returned keys=%d", len(data))
 
             if not data:
@@ -88,6 +88,9 @@ async def get_account_snapshot(current: User = Depends(get_current_user)):
         except Exception:
             logger.exception("unhandled error in /account/snapshot")
             raise HTTPException(500, "Internal server error")
+        finally:
+            if business_manager and business_manager.ib.isConnected():
+                business_manager.disconnect()
 
 
 @router.get("/account/positions")
