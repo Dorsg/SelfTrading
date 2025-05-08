@@ -1,23 +1,8 @@
-# ── Stage 1: grab the official gateway install ──
-FROM ghcr.io/gnzsnz/ib-gateway:10.30.1v AS gateway-src
+FROM ghcr.io/gnzsnz/ib-gateway:10.30.1v
 
-# ── Stage 2: fresh Debian trixie (glibc ≥2.38) ──
-FROM debian:trixie-slim
-
-# ensure certificates, shell, etc.
-RUN apt-get update \
- && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      ca-certificates \
-      bash \
+# ── Add Debian Bookworm backports and install glibc ≥ 2.38 ──
+RUN echo "deb http://deb.debian.org/debian bookworm-backports main" \
+      > /etc/apt/sources.list.d/backports.list \
+ && apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y -t bookworm-backports libc6 \
  && rm -rf /var/lib/apt/lists/*
-
-# copy the entire gateway install dir
-COPY --from=gateway-src /home/ibgateway /home/ibgateway
-
-WORKDIR /home/ibgateway
-
-# re‑expose the API port
-EXPOSE 4004
-
-# start gateway exactly as upstream does
-ENTRYPOINT ["./gatewaystart.sh"]
