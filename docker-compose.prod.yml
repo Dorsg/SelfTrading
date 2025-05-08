@@ -83,7 +83,10 @@ services:
     container_name: ib-gateway-1
     restart: always
     network_mode: host 
-
+    ulimits:                   # ← add this block
+      nofile:
+        soft: 16384            # anything between 4096-65535 is fine
+        hard: 16384
     env_file:
       - .env.production
 
