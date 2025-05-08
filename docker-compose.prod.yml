@@ -82,7 +82,7 @@ services:
       dockerfile: Dockerfile.ibgateway
     container_name: ib-gateway-1
     restart: always
-    network_mode: host
+    network_mode: host 
 
     env_file:
       - .env.production
