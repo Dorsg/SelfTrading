@@ -3,7 +3,7 @@ import logging
 from dotenv import load_dotenv
 from database.db_manager import DBManager
 from database.models import User
-from ib_manager.gateway_manager import start_container, container_exists
+from ib_manager.gateway_manager import container_exists
 from ib_manager.ib_connector import IBBusinessManager
 
 # Load environment variables from .env file
@@ -14,15 +14,7 @@ logging.basicConfig(
     level=logging.INFO,  # Change to INFO to minimize debug noise
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
-log = logging.getLogger("Scheduler")
-
-
-async def start_user_container(user: User):
-    if not container_exists(user.id):
-        log.info(f"Starting container for user {user.id} ({user.ib_username})")
-        start_container(user)
-        log.info("Waiting 180 seconds for IB Gateway startup...")
-        await asyncio.sleep(180)
+log = logging.getLogger("Scheduler")  
 
 async def connect_to_ib_gateway(user: User) -> IBBusinessManager:
     log.info(f"Attempting to connect and fetch data for user {user.id}")
@@ -70,10 +62,14 @@ async def main_loop():
         log.info("Starting a new loop iteration...")
         users = DBManager().get_users_with_ib()
         if not users:
-            log.info("No users with IB accounts found.")
+            log.warning("No users with IB accounts found.")
+
         for user in users:
             # Step 1: Start container if needed
-            await start_user_container(user)
+            if not container_exists(user.id):
+                log.warning(f"Static IB Gateway container missing: {user.id}")
+                # skip current iteration if container is missing
+                continue 
 
             # Step 2: Connect to IB Gateway
             business_manager = await connect_to_ib_gateway(user)
@@ -95,4 +91,4 @@ async def main_loop():
 
         log.info("Sleeping before next iteration...")
         ## sleep for 30 minutes 
-        await asyncio.sleep(1800)
+        await asyncio.sleep(50)

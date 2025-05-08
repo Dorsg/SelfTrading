@@ -12,11 +12,9 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: new_self_trading_db
     ports:
-      - "5432:5432"
+      - "6543:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
-    networks:
-      - selftrading-network
     env_file:
       - .env
 
@@ -30,8 +28,7 @@ services:
         condition: service_started
     env_file:
       - .env
-    networks:
-      - selftrading-network
+
 
   api_gateway:
     build:
@@ -49,8 +46,6 @@ services:
         condition: service_completed_successfully
     env_file:
       - .env
-    networks:
-      - selftrading-network
 
   client-ui:
     build:
@@ -61,8 +56,6 @@ services:
     depends_on:
       api_gateway:
         condition: service_started
-    networks:
-      - selftrading-network
 
   scheduler:
     build:
@@ -80,9 +73,33 @@ services:
     restart: always
     env_file:
       - .env
+
+  ib-gateway-1:
+    image: ${DOCKER_IMAGE}
+    container_name: ib-gateway-1
+    environment:
+      TWS_USERID: ${TWS_USERID}
+      TWS_PASSWORD: ${TWS_PASSWORD}
+      TRADING_MODE: paper
+      READ_ONLY_API: "no"
+      TIME_ZONE: Asia/Jerusalem
+      TWS_ACCEPT_INCOMING: accept
+      BYPASS_WARNING: "yes"
+      BypassOrderPrecautions: "yes"
+      BypassPriceBasedVolatilityRiskWarning: "yes"
+      BypassNoOverfillProtectionPrecaution: "yes"
+      BypassRedirectOrderWarning: "yes"
+      AllowBlindTrading: "yes"
+      ENABLE_VNC: "yes"
+      ENABLE_VNC_SERVER: "true"
+      VNC_SERVER_PASSWORD: ${VNC_SERVER_PASSWORD}
+      OVERRIDE_API_PORT: "4004"
+    ports:
+      - "4005:4004"
+    restart: always
     networks:
-      - selftrading-network
+      - default
 
 networks:
-  selftrading-network:
-    driver: bridge
+  default:
+    name: selftrading_default

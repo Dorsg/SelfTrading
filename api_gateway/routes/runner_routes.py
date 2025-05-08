@@ -44,6 +44,8 @@ async def get_account_snapshot(current: User = Depends(get_current_user)):
     """
     _log_call("GET /snapshot", user=current)
 
+    business_manager = None
+    
     with DBManager() as db:
         try:
             snap = db.get_today_snapshot(user_id=current.id)
