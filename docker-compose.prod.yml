@@ -75,10 +75,9 @@ services:
       - RUNNING_ENV=production
 
   ib-gateway-1:
-    build:
-      context: .
-      dockerfile: Dockerfile.ibgateway
+    image: datawookie/ib-gateway:1026.1h
     container_name: ib-gateway-1
+    network_mode: host
     environment:
       TWS_USERID: ${TWS_USERID}
       TWS_PASSWORD: ${TWS_PASSWORD}
