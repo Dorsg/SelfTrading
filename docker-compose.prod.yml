@@ -85,6 +85,16 @@ services:
       nofile:
         soft: 65536
         hard: 65536
+    entrypoint:
+      - sh
+      - -c
+      - |
+        # install Xvfb if missing, then wrap the gateway startup in Xvfb
+        apk add --no-cache xvfb-run || true
+        export DISPLAY=:99
+        Xvfb :99 -screen 0 1024x768x24 &
+        # original container entrypoint will pick up config.ini and start IB Gateway
+        /entrypoint.sh
     environment:
       TWS_USERID:       ${TWS_USERID}
       TWS_PASSWORD:     ${TWS_PASSWORD}
