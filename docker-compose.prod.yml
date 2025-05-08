@@ -79,8 +79,10 @@ services:
   ib-gateway-1:
     image: ghcr.io/unusualalpha/ib-gateway:latest
     restart: always
+    network_mode: host
     env_file:
       - .env.production
+    port: 
     environment:
       TWS_USERID: ${TWS_USERID}
       TWS_PASSWORD: ${TWS_PASSWORD}
