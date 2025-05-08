@@ -1,7 +1,10 @@
-version: "3.8"
+volumes:
+  pg_data:
+  caddy_data:
+  caddy_config:
+  ib_settings:
 
 services:
-  # — TLS Reverse-proxy
   caddy:
     image: caddy:latest
     container_name: caddy
@@ -12,10 +15,7 @@ services:
       - caddy_data:/data       
       - caddy_config:/config  
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-    networks:
-      - selftrading-network
 
-  # — Postgres (same as dev) —
   db:
     image: postgres:15
     container_name: trading-db
@@ -28,8 +28,6 @@ services:
       POSTGRES_DB:   ${POSTGRES_DB}
     volumes:
       - pg_data:/var/lib/postgresql/data
-    networks:
-      - selftrading-network
 
   db-init:
     build:
@@ -40,10 +38,7 @@ services:
       - db
     env_file:
       - .env.production
-    networks:
-      - selftrading-network
-
-  # — FastAPI backend —
+  
   api_gateway:
     build:
       context: .
@@ -55,7 +50,6 @@ services:
     networks:
       - selftrading-network
 
-  # — Your Vue UI, built with Nginx —
   client-ui:
     build:
       context: .
@@ -65,7 +59,7 @@ services:
     networks:
       - selftrading-network
 
-  # — Scheduler (unchanged) —
+
   scheduler:
     build:
       context: .
@@ -82,12 +76,32 @@ services:
     networks:
       - selftrading-network
 
-networks:
-  selftrading-network:
-    driver: bridge
+  ib-gateway-1:
+    image: ${DOCKER_IMAGE}
+    container_name: ib-gateway-1
+    environment:
+      TWS_USERID: ${TWS_USERID}
+      TWS_PASSWORD: ${TWS_PASSWORD}
+      TRADING_MODE: paper
+      READ_ONLY_API: "no"
+      TIME_ZONE: Asia/Jerusalem
+      TWS_ACCEPT_INCOMING: accept
+      BYPASS_WARNING: "yes"
+      BypassOrderPrecautions: "yes"
+      BypassPriceBasedVolatilityRiskWarning: "yes"
+      BypassNoOverfillProtectionPrecaution: "yes"
+      BypassRedirectOrderWarning: "yes"
+      AllowBlindTrading: "yes"
+      ENABLE_VNC: "yes"
+      ENABLE_VNC_SERVER: "true"
+      VNC_SERVER_PASSWORD: ${VNC_SERVER_PASSWORD}
+      OVERRIDE_API_PORT: "4004"
+    ports:
+      - "4005:4004"
+    restart: always
+    networks:
+      - default
 
-volumes:
-  pg_data:
-  caddy_data:
-  caddy_config:
-  ib_settings:
+networks:
+  default:
+    name: selftrading_default
