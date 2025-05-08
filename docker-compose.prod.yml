@@ -77,21 +77,11 @@ services:
       - RUNNING_ENV=production
 
   ib-gateway-1:
-    build:
-      context: .
-      dockerfile: Dockerfile.ibgateway
-    container_name: ib-gateway-1
+    image: ghcr.io/unusualalpha/ib-gateway:latest
     restart: always
-    network_mode: host 
-    ulimits:                   # ← add this block
-      nofile:
-        soft: 16384            # anything between 4096-65535 is fine
-        hard: 16384
     env_file:
       - .env.production
-
     environment:
-      # (you can also keep the env_file and rely on .env.production)
       TWS_USERID: ${TWS_USERID}
       TWS_PASSWORD: ${TWS_PASSWORD}
       TRADING_MODE: paper
@@ -108,12 +98,13 @@ services:
       ENABLE_VNC_SERVER: "true"
       VNC_SERVER_PASSWORD: ${VNC_SERVER_PASSWORD}
       OVERRIDE_API_PORT: "4004"
-
+    ports:
+      - "127.0.0.1:4002:4002"
+      - "127.0.0.1:5900:5900"
     depends_on:
       - db
       - db-init
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+
 
 networks:
   default:
