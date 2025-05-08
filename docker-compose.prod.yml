@@ -63,6 +63,7 @@ services:
       context: .
       dockerfile: Dockerfile.scheduler
     container_name: scheduler
+    network_mode: host
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
