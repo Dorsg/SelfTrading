@@ -24,7 +24,7 @@ class IBBusinessManager:
     async def connect(self):
         try:
             log.info(f"Connecting to IB Gateway for user {self.user.id} on port {self.port}")
-            await self.ib.connectAsync("host.docker.internal", self.port, clientId=1, timeout=IB_CONNECTION_TIMEOUT)
+            await self.ib.connectAsync("host.docker.internal", self.port, clientId=self.user.id, timeout=IB_CONNECTION_TIMEOUT)
             if not self.ib.isConnected():
                 raise ConnectionError("Failed to connect")
 
