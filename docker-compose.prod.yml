@@ -75,7 +75,9 @@ services:
       - RUNNING_ENV=production
 
   ib-gateway-1:
-    image: ${DOCKER_IMAGE}
+    build:
+      context: .
+      dockerfile: Dockerfile.ibgateway
     container_name: ib-gateway-1
     environment:
       TWS_USERID: ${TWS_USERID}

@@ -1,0 +1,23 @@
+# ── Stage 1: grab the official gateway install ──
+FROM ghcr.io/gnzsnz/ib-gateway:10.30.1v AS gateway-src
+
+# ── Stage 2: fresh Debian trixie (glibc ≥2.38) ──
+FROM debian:trixie-slim
+
+# ensure certificates, shell, etc.
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      ca-certificates \
+      bash \
+ && rm -rf /var/lib/apt/lists/*
+
+# copy the entire gateway install dir
+COPY --from=gateway-src /home/ibgateway /home/ibgateway
+
+WORKDIR /home/ibgateway
+
+# re‑expose the API port
+EXPOSE 4004
+
+# start gateway exactly as upstream does
+ENTRYPOINT ["./gatewaystart.sh"]
