@@ -79,9 +79,13 @@ services:
   ib-gateway-1:
     image: ghcr.io/unusualalpha/ib-gateway:latest
     restart: always
-    network_mode: host
     env_file:
       - .env.production
+    shm_size: '256m'  # RECOMMENDED: Add this line (you can increase to '512m' or '1g' if needed)
+    ulimits: 
+      nofile:
+        soft: 65536 
+        hard: 65536 
     environment:
       TWS_USERID: ${TWS_USERID}
       TWS_PASSWORD: ${TWS_PASSWORD}
@@ -96,12 +100,12 @@ services:
       BypassRedirectOrderWarning: "yes"
       AllowBlindTrading: "yes"
       ENABLE_VNC: "yes"
-      ENABLE_VNC_SERVER: "true"
+      ENABLE_VNC_SERVER: "true" # Setting VNC_SERVER_PASSWORD usually enables VNC
       VNC_SERVER_PASSWORD: ${VNC_SERVER_PASSWORD}
-      OVERRIDE_API_PORT: "4004"
+      OVERRIDE_API_PORT: "4004" # Gateway inside container listens on 4004
     ports:
-      - "127.0.0.1:4002:4002"
-      - "127.0.0.1:5900:5900"
+      - "127.0.0.1:4004:4004" # CORRECTED: Host port 4004 maps to container port 4004
+      - "127.0.0.1:5900:5900" # VNC port mapping (assuming VNC in container is on 5900)
     depends_on:
       - db
       - db-init
