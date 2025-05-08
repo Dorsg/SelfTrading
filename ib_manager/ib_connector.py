@@ -14,23 +14,46 @@ log = logging.getLogger("IBKR-Business-Manager")
 
 # Load connection timeout from environment variables
 IB_CONNECTION_TIMEOUT = int(os.getenv("IB_CONNECTION_TIMEOUT", 60))
+RUNNING_IN_PRODUCTION_DOCKER = os.getenv("RUNNING_ENV", "local") == "production"
 
 class IBBusinessManager:
     def __init__(self, user):
         self.user = user
         self.ib = IB()
-        self.port = 4004 + user.id
+        self.internal_gateway_port = 4004
+        if RUNNING_IN_PRODUCTION_DOCKER:
+            self.gateway_host = f"ib-gateway-{user.id}"
+        else:
+            self.gateway_host = "host.docker.internal"
+            self.host_mapped_port = 4004 + user.id
 
     async def connect(self):
         try:
-            log.info(f"Connecting to IB Gateway for user {self.user.id} on port {self.port}")
-            await self.ib.connectAsync("host.docker.internal", self.port, clientId=self.user.id, timeout=IB_CONNECTION_TIMEOUT)
-            if not self.ib.isConnected():
-                raise ConnectionError("Failed to connect")
+            connection_host = self.gateway_host
+            connection_port = self.internal_gateway_port
 
-            log.info(f"Connected to IBKR as {self.user.ib_username}")
+            if not RUNNING_IN_PRODUCTION_DOCKER:
+                connection_port = self.host_mapped_port
+
+            log.info(f"Connecting to IB Gateway for user {self.user.id} ({self.user.ib_username}) at {connection_host}:{connection_port}, clientId: {self.user.id}")
+            
+            await self.ib.connectAsync(host=connection_host, port=connection_port, clientId=self.user.id, timeout=IB_CONNECTION_TIMEOUT)
+            
+            if not self.ib.isConnected():
+                log.error(f"Failed to connect to IB Gateway for user {self.user.ib_username} at {connection_host}:{connection_port}. IB.isConnected() is False.")
+                raise ConnectionError(f"Failed to connect to IB Gateway for {self.user.ib_username}")
+
+            log.info(f"Successfully connected to IBKR as {self.user.ib_username} via {connection_host}:{connection_port}")
+        except ConnectionRefusedError:
+            log.error(f"Connection refused for user {self.user.ib_username} when connecting to {connection_host}:{connection_port}. Ensure the gateway is running and accessible.")
+            raise
+        except asyncio.TimeoutError:
+            log.error(f"Connection timed out for user {self.user.ib_username} when connecting to {connection_host}:{connection_port} after {IB_CONNECTION_TIMEOUT}s.")
+            raise
         except Exception as e:
-            log.error(f"Error for user {self.user.ib_username}: {e}")
+            log.error(f"Generic error connecting to IB Gateway for user {self.user.ib_username} at {connection_host}:{connection_port}: {e}", exc_info=True)
+            raise
+
 
     def disconnect(self):
         try:

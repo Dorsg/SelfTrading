@@ -71,6 +71,8 @@ services:
     depends_on:
       - db
       - db-init
+    environment:
+      - RUNNING_ENV=production
 
   ib-gateway-1:
     image: ${DOCKER_IMAGE}
