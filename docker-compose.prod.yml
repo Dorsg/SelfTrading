@@ -98,8 +98,6 @@ services:
     ports:
       - "4005:4004"
     restart: always
-    networks:
-      - default
 
 networks:
   default:
