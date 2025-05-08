@@ -82,7 +82,6 @@ services:
     network_mode: host
     env_file:
       - .env.production
-    port: 
     environment:
       TWS_USERID: ${TWS_USERID}
       TWS_PASSWORD: ${TWS_PASSWORD}
