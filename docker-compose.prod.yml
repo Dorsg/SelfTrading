@@ -77,41 +77,40 @@ services:
       - RUNNING_ENV=production
 
   ib-gateway-1:
-    image: datawookie/ib-gateway:1026.1h
+    build:
+      context: .
+      dockerfile: Dockerfile.ibgateway
     container_name: ib-gateway-1
-    network_mode: host
     restart: always
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
-    entrypoint:
-      - sh
-      - -c
-      - |
-        # install Xvfb if missing, then wrap the gateway startup in Xvfb
-        apk add --no-cache xvfb-run || true
-        export DISPLAY=:99
-        Xvfb :99 -screen 0 1024x768x24 &
-        # original container entrypoint will pick up config.ini and start IB Gateway
-        /entrypoint.sh
+    network_mode: host
+
+    env_file:
+      - .env.production
+
     environment:
-      TWS_USERID:       ${TWS_USERID}
-      TWS_PASSWORD:     ${TWS_PASSWORD}
-      TRADING_MODE:     paper
-      READ_ONLY_API:    "no"
-      TIME_ZONE:        Asia/Jerusalem
-      TWS_ACCEPT_INCOMING:           accept
-      BYPASS_WARNING:               "yes"
-      BypassOrderPrecautions:        "yes"
+      # (you can also keep the env_file and rely on .env.production)
+      TWS_USERID: ${TWS_USERID}
+      TWS_PASSWORD: ${TWS_PASSWORD}
+      TRADING_MODE: paper
+      READ_ONLY_API: "no"
+      TIME_ZONE: Asia/Jerusalem
+      TWS_ACCEPT_INCOMING: accept
+      BYPASS_WARNING: "yes"
+      BypassOrderPrecautions: "yes"
       BypassPriceBasedVolatilityRiskWarning: "yes"
-      BypassNoOverfillProtectionPrecaution:  "yes"
-      BypassRedirectOrderWarning:    "yes"
-      AllowBlindTrading:             "yes"
-      ENABLE_VNC:       "yes"
+      BypassNoOverfillProtectionPrecaution: "yes"
+      BypassRedirectOrderWarning: "yes"
+      AllowBlindTrading: "yes"
+      ENABLE_VNC: "yes"
       ENABLE_VNC_SERVER: "true"
       VNC_SERVER_PASSWORD: ${VNC_SERVER_PASSWORD}
       OVERRIDE_API_PORT: "4004"
+
+    depends_on:
+      - db
+      - db-init
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
 networks:
   default:
