@@ -1,22 +1,22 @@
-# ── Stage 1: grab the official gateway install ──
-FROM ghcr.io/gnzsnz/ib-gateway:10.30.1v AS gateway-src
+# ── Stage “glibc” ── pull in a fresh glibc ≥ 2.38 from Debian Trixie
+FROM debian:trixie-slim AS glibc
 
-# ── Stage 2: fresh Debian trixie (glibc ≥ 2.38) ──
-FROM debian:trixie-slim
-
-# install ca‑certs, bash, apt, etc.
 RUN apt-get update \
- && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      ca-certificates \
-      bash \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y libc6 \
  && rm -rf /var/lib/apt/lists/*
 
-# copy the entire gateway install directory (with gatewaystart.sh, run.sh, config, etc.)
-COPY --from=gateway-src /home/ibgateway /home/ibgateway
+# ── Final stage ── start from the official IB‑Gateway image
+FROM ghcr.io/gnzsnz/ib-gateway:10.30.1v
 
-WORKDIR /home/ibgateway
+# copy only the glibc runtime (and dynamic loader) from the trixie stage
+COPY --from=glibc /lib/x86_64-linux-gnu/libc.so.6            /lib/x86_64-linux-gnu/libc.so.6
+COPY --from=glibc /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
 
+# everything else (including gatewaystart.sh, run.sh, IBC, socat, Xvfb, etc.)
+# stays exactly as the upstream image arranged it
+
+# re‑expose the API port
 EXPOSE 4004
 
-# run exactly the same entrypoint script the official image uses
-ENTRYPOINT ["./gatewaystart.sh"]
+# reuse the official entrypoint
+ENTRYPOINT ["/home/ibgateway/gatewaystart.sh"]
