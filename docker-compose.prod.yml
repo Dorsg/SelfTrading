@@ -21,7 +21,7 @@ services:
     container_name: trading-db
     restart: always
     env_file:
-      - .env.production
+      - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -37,7 +37,7 @@ services:
     depends_on:
       - db
     env_file:
-      - .env.production
+      - .env
   
   api_gateway:
     build:
@@ -46,7 +46,7 @@ services:
     container_name: api_gateway
     restart: unless-stopped
     env_file:
-      - .env.production
+      - .env
 
 
   client-ui:
@@ -63,17 +63,17 @@ services:
       context: .
       dockerfile: Dockerfile.scheduler
     container_name: scheduler
-    extra_hosts:                           # <— add this
-      - "host.docker.internal:host-gateway"
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     env_file:
-      - .env.production
+      - .env
     depends_on:
       - db
       - db-init
     environment:
+      - IB_GATEWAY_HOST=ib-gateway-1
+      - IB_GATEWAY_PORT=4004
       - RUNNING_ENV=production
 
   ib-gateway-1:
@@ -81,7 +81,7 @@ services:
     image: ghcr.io/gnzsnz/ib-gateway:latest
     restart: always
     env_file:
-      - .env.production
+      - .env
     shm_size: '256m'  # RECOMMENDED: Add this line (you can increase to '512m' or '1g' if needed)
     ulimits: 
       nofile:
