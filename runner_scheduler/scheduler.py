@@ -91,4 +91,5 @@ async def main_loop():
 
         log.info("Sleeping before next iteration...")
         ## sleep for 30 minutes 
-        await asyncio.sleep(50)
+        await asyncio.sleep(1800)
+       
