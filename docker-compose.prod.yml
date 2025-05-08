@@ -78,26 +78,28 @@ services:
     image: datawookie/ib-gateway:1026.1h
     container_name: ib-gateway-1
     network_mode: host
+    restart: always
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     environment:
-      TWS_USERID: ${TWS_USERID}
-      TWS_PASSWORD: ${TWS_PASSWORD}
-      TRADING_MODE: paper
-      READ_ONLY_API: "no"
-      TIME_ZONE: Asia/Jerusalem
-      TWS_ACCEPT_INCOMING: accept
-      BYPASS_WARNING: "yes"
-      BypassOrderPrecautions: "yes"
+      TWS_USERID:       ${TWS_USERID}
+      TWS_PASSWORD:     ${TWS_PASSWORD}
+      TRADING_MODE:     paper
+      READ_ONLY_API:    "no"
+      TIME_ZONE:        Asia/Jerusalem
+      TWS_ACCEPT_INCOMING:           accept
+      BYPASS_WARNING:               "yes"
+      BypassOrderPrecautions:        "yes"
       BypassPriceBasedVolatilityRiskWarning: "yes"
-      BypassNoOverfillProtectionPrecaution: "yes"
-      BypassRedirectOrderWarning: "yes"
-      AllowBlindTrading: "yes"
-      ENABLE_VNC: "yes"
+      BypassNoOverfillProtectionPrecaution:  "yes"
+      BypassRedirectOrderWarning:    "yes"
+      AllowBlindTrading:             "yes"
+      ENABLE_VNC:       "yes"
       ENABLE_VNC_SERVER: "true"
       VNC_SERVER_PASSWORD: ${VNC_SERVER_PASSWORD}
       OVERRIDE_API_PORT: "4004"
-    ports:
-      - "4005:4004"
-    restart: always
 
 networks:
   default:
