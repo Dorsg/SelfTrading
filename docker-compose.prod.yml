@@ -105,8 +105,8 @@ services:
       VNC_SERVER_PASSWORD: ${VNC_SERVER_PASSWORD}
       OVERRIDE_API_PORT: "4004" # Gateway inside container listens on 4004
     ports:
-      - "127.0.0.1:4004:4004" # CORRECTED: Host port 4004 maps to container port 4004
-      - "127.0.0.1:5900:5900" # VNC port mapping (assuming VNC in container is on 5900)
+      - "4004:4004"
+      - "5900:5900"
     depends_on:
       - db
       - db-init
