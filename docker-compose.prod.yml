@@ -63,7 +63,8 @@ services:
       context: .
       dockerfile: Dockerfile.scheduler
     container_name: scheduler
-    network_mode: host
+    extra_hosts:                           # <— add this
+      - "host.docker.internal:host-gateway"
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

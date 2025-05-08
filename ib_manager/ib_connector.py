@@ -22,7 +22,7 @@ class IBBusinessManager:
         self.ib = IB()
         self.internal_gateway_port = 4004
         if RUNNING_IN_PRODUCTION_DOCKER:
-            self.gateway_host = f"ib-gateway-{user.id}"
+            self.gateway_host = "host.docker.internal"
         else:
             self.gateway_host = "host.docker.internal"
             self.host_mapped_port = 4004 + user.id
