@@ -77,6 +77,7 @@ services:
       - RUNNING_ENV=production
 
   ib-gateway-1:
+    container_name: ib-gateway-1
     image: ghcr.io/gnzsnz/ib-gateway:latest
     restart: always
     env_file:
